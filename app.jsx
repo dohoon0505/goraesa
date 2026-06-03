@@ -697,34 +697,11 @@ function ItemSheet({ item, onClose, onOrder }) {
 // ---------- App root ----------
 // ---------- Splash (앱 스플래시 화면) ----------
 function Splash({ onDone }) {
-  const [phase, setPhase] = useState("intro"); // intro → ready → exit
+  const DURATION = 3000; // 프로그래스바 + 카운트다운 길이 (3초)
+  const [phase, setPhase] = useState("intro"); // intro → exit
   const [progress, setProgress] = useState(0);
-  const reduce = useRef(
-    typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
+  const [remain, setRemain] = useState(Math.ceil(DURATION / 1000));
   const exitTimer = useRef(null);
-
-  // 로딩 진행률 애니메이션 → 완료 시 ready
-  useEffect(() => {
-    if (reduce.current) {
-      setProgress(100);
-      setPhase("ready");
-      return;
-    }
-    let raf;
-    const start = performance.now();
-    const DUR = 1700;
-    const tick = (now) => {
-      const p = Math.min(100, ((now - start) / DUR) * 100);
-      setProgress(p);
-      if (p < 100) raf = requestAnimationFrame(tick);
-      else setPhase("ready");
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   const enter = () => {
     if (exitTimer.current) return;
@@ -732,12 +709,20 @@ function Splash({ onDone }) {
     exitTimer.current = setTimeout(() => onDone && onDone(), 650);
   };
 
-  // ready 도달 후 잠시 머무르다 자동 진입
+  // 3초 동안 진행률 + 남은 시간 카운트다운 → 완료 시 자동 진입
   useEffect(() => {
-    if (phase !== "ready") return;
-    const id = setTimeout(enter, 900);
-    return () => clearTimeout(id);
-  }, [phase]);
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const elapsed = now - start;
+      setProgress(Math.min(100, (elapsed / DURATION) * 100));
+      setRemain(Math.max(1, Math.ceil((DURATION - elapsed) / 1000)));
+      if (elapsed < DURATION) raf = requestAnimationFrame(tick);
+      else enter();
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => () => clearTimeout(exitTimer.current), []);
 
@@ -768,8 +753,8 @@ function Splash({ onDone }) {
         <div className="splash-loader" aria-hidden="true">
           <span className="splash-loader-bar" style={{ width: progress + "%" }} />
         </div>
-        <span className={"splash-hint" + (phase === "ready" ? " on" : "")}>
-          터치하여 시작하기
+        <span className="splash-countdown" aria-live="polite">
+          {remain}초 뒤 접속됩니다
         </span>
       </div>
     </div>
