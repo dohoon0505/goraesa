@@ -42,7 +42,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 @media (min-width: 520px) {
   .app { padding: 24px 0; align-items: flex-start; }
-  .app-frame { border-radius: 28px; box-shadow: 0 24px 80px -16px rgba(27,29,36,0.18), 0 0 0 1px var(--sm-border-subtle); overflow: hidden; min-height: 880px; }
+  .app-frame { box-shadow: 0 24px 80px -16px rgba(27,29,36,0.18), 0 0 0 1px var(--sm-border-subtle); overflow: hidden; min-height: 880px; }
 }
 
 /* ────── App bar ────── */
