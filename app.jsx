@@ -384,7 +384,7 @@ function OrderScreen({ initialProduct }) {
       <div className="order-hero">
         <span className="step-pill"><I.Edit size={12} strokeWidth={2.2} /> 주문서 작성</span>
         <h2>내용을 작성하시면<br />문자로 주문이 보내져요</h2>
-        <p>입력한 내용은 그대로 메시지에 복사돼요. 자세히 입력할수록 빨리 처리할 수 있어요.</p>
+        <p>모든 내용을 작성 후<br />간편하게 신청해보세요</p>
       </div>
 
       <div className="progress" aria-label={`${done}/${total} 입력 완료`}>
