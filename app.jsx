@@ -4,7 +4,7 @@ const { useState, useEffect, useRef, useMemo } = React;
 // admin/기본 정보 입력(SITE_INFO.phone) 우선, 없으면 기존 정적 값.
 const PHONE = (typeof window !== "undefined" && window.SITE_INFO && window.SITE_INFO.phone) || "010-0000-0000";
 const PHONE_HREF = "tel:" + PHONE.replace(/[^\d]/g, "");
-const SMS_HREF = "sms:01000000000";
+const SMS_HREF = "sms:01076152699";
 
 // ---------- Utilities ----------
 const fmt = (n) => n.toLocaleString("ko-KR");
@@ -51,12 +51,6 @@ function LiveDelivery() {
       </span>
       <span className="live-text">
         <span className="live-label">{isOpen ? "당일배송 가능" : "당일배송 마감"}</span>
-        {!isOpen && (
-          <>
-            <span className="live-sep" aria-hidden="true">·</span>
-            <span className="live-meta">09:00~18:30</span>
-          </>
-        )}
       </span>
     </div>
   );
@@ -68,7 +62,7 @@ function AppBar({ title, onBack, scrolled, action }) {
       {onBack && (
         <button className="iconbtn" onClick={onBack} aria-label="뒤로 가기"><I.Back /></button>
       )}
-      <div className="pagetitle">{title || "전국꽃배달"}</div>
+      <div className="pagetitle">{title || "경조사 지원센터"}</div>
       <div className="grow" />
       <LiveDelivery />
       {action || (
@@ -83,8 +77,8 @@ function BottomNav({ route, go }) {
   const tabs = [
     { id: "home", label: "홈", icon: I.Home },
     { id: "items", label: "상품목록", icon: I.List },
-    { id: "order", label: "주문하기", icon: I.Order },
-    { id: "faq", label: "질의응답", icon: I.Help },
+    { id: "order", label: "신청하기", icon: I.Order },
+    { id: "history", label: "신청내역", icon: I.Doc },
   ];
   return (
     <nav className="bottomnav" aria-label="기본 메뉴">
@@ -178,14 +172,6 @@ function HomeScreen({ go, openCat, onPick }) {
         <p>{heroSubhead.split(/\r?\n/).map((line, i, arr) => (
           <React.Fragment key={i}>{line}{i < arr.length - 1 && <br />}</React.Fragment>
         ))}</p>
-        <a href={PHONE_HREF} className="hero-cta">
-          <span className="ring"><I.Phone size={20} strokeWidth={2} /></span>
-          <span className="grow">
-            <div className="label">{heroBanner}</div>
-            <div className="num">{PHONE}</div>
-          </span>
-          <span className="pill">바로 전화</span>
-        </a>
       </section>
 
       <div style={{ display: "none" }} />
@@ -240,24 +226,17 @@ function HomeScreen({ go, openCat, onPick }) {
         </section>
       ))}
 
-      <div className="usp">
-        <div>
-          <h4>전화 한 통이면, 3시간 안에 도착해요</h4>
-          <p>상품 선택부터 리본 문구까지 한 번에 안내해 드려요.</p>
-        </div>
-        <a href={PHONE_HREF} className="ring" aria-label="전화 걸기"><I.Phone strokeWidth={2.2} /></a>
-      </div>
-
       <section className="section how-section">
         <div className="section-head">
-          <h3>마음을 담아 보내는 3단계</h3>
+          <h3>경조사 지원 신청방법</h3>
           <p className="how-sub">전화 없이도, 누구나 3분이면 주문을 완성할 수 있어요.</p>
         </div>
         <ol className="how-timeline">
           {[
-            { n: "01", t: "상품 고르기", d: "어떤 자리에, 누구에게 보내실 건가요?\n5가지 카테고리에서 마음에 드는 상품을 골라보세요.", icon: I.Gift },
-            { n: "02", t: "주문서 작성", d: "받는 분, 배송지, 리본 문구까지\n꽃배달에 필요한 모든 항목을 한 번에 입력해요.", icon: I.Edit },
-            { n: "03", t: "간편 주문", d: "메시지 한 통을 보내면 주문이 완료돼요.\n곧바로 담당자가 확인 연락을 드려요.", icon: I.Sparkle },
+            { n: "01", t: "상황별 상품 선택", d: "어떤 대상에게 어떤 경조사가 발생하였나요?\n상황에 맞춰 상품을 선택할 수 있어요", icon: I.Gift },
+            { n: "02", t: "주문서 작성", d: "경조사 지원에 필요한 모든 내용(배송주소, 받는분 정보 등)을 작성하여 신청해주세요", icon: I.Edit },
+            { n: "03", t: "경조사 신청 완료", d: "메시지 한 통을 보내면 주문이 완료돼요.\n곧바로 담당자가 확인 연락을 드려요.", icon: I.Sparkle },
+            { n: "04", t: "상품배송 완료", d: "주문하신 상품을 정성껏 준비해 배송해드리고, 완료 후 사진을 발송해 드려요.", icon: I.Truck },
           ].map((s) => {
             const Ic = s.icon;
             return (
@@ -283,26 +262,15 @@ function HomeScreen({ go, openCat, onPick }) {
           <div className="section-head">
             <h3>{homeFaqTitle}</h3>
           </div>
-          <div className="faq-list" style={{ padding: "0 20px" }}>
+          <div className="faq-list" style={{ padding: 0 }}>
             {pickedFaqs.map((it, i) => <HomeFaqItem key={i} item={it} />)}
-          </div>
-          <div style={{ textAlign: "center", padding: "12px 20px 0" }}>
-            <button className="btn-secondary" style={{ width: "auto", display: "inline-flex", padding: "0 18px" }} onClick={() => go("faq")}>
-              전체 질문 보기
-            </button>
           </div>
         </section>
       )}
 
       <div className="footer">
         <a className="num" href={PHONE_HREF}>{PHONE}</a>
-        <p>대한민국 어디든 3시간 당일배송</p>
-        <div className="row">
-          <a href={SMS_HREF} className="btn-secondary"><I.Chat size={18} /> 문자 문의</a>
-          <a href={PHONE_HREF} className="btn-secondary" style={{ background: "var(--p-neutral-90)", color: "var(--p-neutral-0)" }}>
-            <I.Phone size={18} /> 전화 걸기
-          </a>
-        </div>
+        <p>경조사 지원 문의센터</p>
       </div>
     </div>
   );
@@ -362,10 +330,6 @@ function ItemsScreen({ activeTab, setActiveTab, onPick }) {
         );
       })}
 
-      <div className="footer">
-        <a className="num" href={PHONE_HREF}>{PHONE}</a>
-        <p>마음에 드는 상품이 없으신가요? 전화로 상담받으세요</p>
-      </div>
     </div>
   );
 }
@@ -381,6 +345,7 @@ function OrderScreen({ initialProduct }) {
   });
   const [toast, setToast] = useState(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [recentOpen, setRecentOpen] = useState(false);
 
   useEffect(() => {
     if (initialProduct) setForm((f) => ({ ...f, product: initialProduct }));
@@ -388,9 +353,9 @@ function OrderScreen({ initialProduct }) {
 
   const fields = [
     { id: "product",   label: "상품 분류 및 이름", hint: "EX) 개업화분 뱅갈나무", icon: I.Tag },
-    { id: "address",   label: "보내는 장소(상세주소)", hint: "EX) 부산 동구 고관로29번길 8 솥뚜껑삼겹살", icon: I.Pin },
+    { id: "address",   label: "보내는 장소(상세주소)", hint: "EX) 부산 동구 고관로29번길 8 솥뚜껑삼겹살", icon: I.Pin, multiline: true },
     { id: "recipient", label: "받는 분 정보(성함, 연락처)", hint: "EX) 홍길동, 010-0000-0000", icon: I.User },
-    { id: "sender",    label: "리본문구 좌측(보내는분)", hint: "EX) 00컴퍼니 대표이사 홍길동", icon: I.Edit },
+    { id: "sender",    label: "리본문구 좌측(보내는분)", hint: "EX) 00컴퍼니 대표이사 홍길동", icon: I.Edit, recent: true },
     { id: "message",   label: "리본문구 우측(경조사어)", hint: "EX) 개업을 진심으로 축하합니다", icon: I.Heart, guide: true },
   ];
   const done = fields.filter((f) => form[f.id].trim().length > 0).length;
@@ -446,16 +411,29 @@ function OrderScreen({ initialProduct }) {
                   <button type="button" className="field-guide-btn" onClick={() => setGuideOpen(true)}>
                     <I.Sparkle size={12} strokeWidth={2.2} /> 작성가이드
                   </button>
+                ) : f.recent ? (
+                  <button type="button" className="field-guide-btn" onClick={() => setRecentOpen(true)}>
+                    <I.Clock size={12} strokeWidth={2.2} /> 최근작성
+                  </button>
                 ) : (
                   isDone ? <I.Check size={16} strokeWidth={2.4} style={{ color: "var(--p-green-500)" }} /> : <Ic size={16} style={{ color: "var(--sm-content-tertiary)" }} />
                 )}
               </div>
-              <input
-                type="text"
-                value={value}
-                placeholder={f.hint}
-                onChange={(e) => setForm({ ...form, [f.id]: e.target.value })}
-              />
+              {f.multiline ? (
+                <textarea
+                  rows={2}
+                  value={value}
+                  placeholder={f.hint}
+                  onChange={(e) => setForm({ ...form, [f.id]: e.target.value })}
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={value}
+                  placeholder={f.hint}
+                  onChange={(e) => setForm({ ...form, [f.id]: e.target.value })}
+                />
+              )}
             </div>
           );
         })}
@@ -465,8 +443,8 @@ function OrderScreen({ initialProduct }) {
         <h5>NOTICE</h5>
         <h6>주문 시 꼭 확인해주세요</h6>
         <ul>
-          <li>배송완료 이후에 사진과 수령인을 발송해 드려요.</li>
-          <li>18:00 이후 주문은 익일 오전 중 배송돼요.</li>
+          <li>배송완료 이후에 사진을 발송해 드려요.</li>
+          <li>18:30 이후 주문은 익일 오전 중 배송돼요.</li>
           <li>일부 지역에서 배송비가 발생할 수 있어요.</li>
           <li>화분의 종류는 변경될 수 있어요.</li>
         </ul>
@@ -474,11 +452,8 @@ function OrderScreen({ initialProduct }) {
 
       <div className="dock">
         <button className="btn" onClick={send}>
-          <I.Chat size={18} strokeWidth={2} /> 작성한 내용으로 주문하기
+          <I.Chat size={18} strokeWidth={2} /> 작성한 내용으로 신청
         </button>
-        <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: "var(--sm-content-tertiary)" }}>
-          또는 <a href={PHONE_HREF} style={{ color: "var(--p-indigo-600)", fontWeight: 700 }}>전화로 바로 주문하기</a>
-        </div>
       </div>
 
       {toast && <div className="toast"><I.Check size={16} strokeWidth={2.4} /> {toast}</div>}
@@ -488,95 +463,87 @@ function OrderScreen({ initialProduct }) {
           onPick={(text) => { setForm((f) => ({ ...f, message: text })); setGuideOpen(false); setToast("리본문구가 입력되었어요"); setTimeout(() => setToast(null), 1800); }}
         />
       )}
+      {recentOpen && (
+        <RecentSenders
+          onClose={() => setRecentOpen(false)}
+          onPick={(text) => { setForm((f) => ({ ...f, sender: text })); setRecentOpen(false); setToast("보내는분이 입력되었어요"); setTimeout(() => setToast(null), 1800); }}
+        />
+      )}
     </div>
   );
 }
 
 // ---------- FAQ ----------
-function FaqScreen() {
-  const [activeCat, setActiveCat] = useState("all");
-  const [openId, setOpenId] = useState(null);
-  const [query, setQuery] = useState("");
+function HistoryScreen() {
+  const [filter, setFilter] = useState("all");
+  const filtersRef = useRef(null);
+  useEffect(() => {
+    const el = filtersRef.current?.querySelector(`[data-filter='${filter}']`);
+    if (el) el.scrollIntoViewIfNeeded?.() ?? el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [filter]);
 
-  const cats = [{ id: "all", label: "전체" }, ...window.FAQ_CATEGORIES];
-  const filtered = window.FAQ_ITEMS.filter((it) => {
-    if (activeCat !== "all" && it.cat !== activeCat) return false;
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      return it.q.toLowerCase().includes(q) || it.a.toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const STATUS = {
+    pending:   { label: "접수대기", cls: "pending" },
+    received:  { label: "접수완료", cls: "received" },
+    delivered: { label: "배송완료", cls: "delivered" },
+    cancelled: { label: "주문취소", cls: "cancelled" },
+  };
+  const filters = [
+    { id: "all", label: "전체" },
+    { id: "pending", label: "접수대기" },
+    { id: "received", label: "접수완료" },
+    { id: "delivered", label: "배송완료" },
+    { id: "cancelled", label: "주문취소" },
+  ];
 
-  const catLabel = (id) => window.FAQ_CATEGORIES.find((c) => c.id === id)?.label || "";
+  const records = window.ORDER_HISTORY || [];
+  const list = records.filter((r) => filter === "all" || r.status === filter);
 
   return (
     <div>
-      <div className="faq-hero">
-        <span className="step-pill"><I.Help size={12} strokeWidth={2.2} /> 자주 묻는 질문</span>
-        <h2>궁금한 점을<br />빠르게 찾아드려요</h2>
-        <p>배송·주문·상품·결제 관련 답변을 모았어요. 더 궁금한 점은 전화 또는 문자로 문의주세요.</p>
-        <div className="faq-search">
-          <I.Search size={18} strokeWidth={2} />
-          <input
-            type="text"
-            placeholder="질문 검색하기"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          {query && (
-            <button className="faq-clear" onClick={() => setQuery("")} aria-label="검색어 지우기">
-              <I.Close size={14} strokeWidth={2.4} />
-            </button>
-          )}
-        </div>
+      <div className="hist-hero">
+        <span className="step-pill"><I.Doc size={12} strokeWidth={2.2} /> 신청내역</span>
+        <h2>신청하신 내역을<br />확인할 수 있어요</h2>
+        <p>경조사 지원 신청 건의 진행 상태를 확인할 수 있어요.<br />접수완료 되어있다면 요청한 일시에 맞춰 배송되어요.</p>
       </div>
 
-      <div className="faq-tabs">
-        {cats.map((c) => (
-          <button key={c.id} className={"faq-tab " + (c.id === activeCat ? "on" : "")} onClick={() => setActiveCat(c.id)}>
-            {c.label}
+      <div className="hist-filters" ref={filtersRef}>
+        {filters.map((f) => (
+          <button key={f.id} data-filter={f.id} className={"hist-chip " + (f.id === filter ? "on" : "")} onClick={() => setFilter(f.id)}>
+            {f.label}
           </button>
         ))}
       </div>
 
-      <div className="faq-list">
-        {filtered.length === 0 ? (
-          <div className="faq-empty">
-            <I.Search size={28} strokeWidth={1.5} />
-            <h4>검색 결과가 없어요</h4>
-            <p>다른 키워드로 검색하거나 전화로 문의해주세요.</p>
-            <a href={PHONE_HREF} className="btn-secondary" style={{ marginTop: 12, width: "auto", display: "inline-flex", padding: "0 18px" }}>
-              <I.Phone size={16} /> 전화로 문의하기
-            </a>
+      <div className="hist-list">
+        {list.length === 0 ? (
+          <div className="hist-empty">
+            <I.Clock size={28} strokeWidth={1.5} />
+            <h4>신청내역이 없어요</h4>
+            <p>해당 상태의 신청 건이 없습니다.</p>
           </div>
-        ) : filtered.map((it, i) => {
-          const id = `${it.cat}-${i}`;
-          const isOpen = openId === id;
+        ) : list.map((r) => {
+          const st = STATUS[r.status] || {};
           return (
-            <div key={id} className={"faq-item " + (isOpen ? "open" : "")}>
-              <button className="faq-q" onClick={() => setOpenId(isOpen ? null : id)} aria-expanded={isOpen}>
-                <span className="faq-q-text">
-                  <span className="faq-cat">{catLabel(it.cat)}</span>
-                  <span className="faq-q-title">{it.q}</span>
-                </span>
-                <span className="faq-icon" aria-hidden="true">
-                  {isOpen ? <I.Minus size={18} /> : <I.Plus size={18} />}
-                </span>
-              </button>
-              {isOpen && <div className="faq-a">{it.a}</div>}
+            <div className="hist-card" key={r.id}>
+              <div className="hist-product-row">
+                <span className="hist-product">{r.category}</span>
+                <span className={"hist-badge " + (st.cls || "")}>{st.label}</span>
+              </div>
+              <dl className="hist-rows">
+                <div><dt>신청상품</dt><dd>{r.product}</dd></div>
+                <div><dt>받는 분</dt><dd>{r.recipient}</dd></div>
+                <div className="hist-addr"><dt>보내는 장소</dt><dd>{r.address}</dd></div>
+                <div><dt>경조사어</dt><dd>{r.message}</dd></div>
+                <div><dt>보내는분</dt><dd>{r.sender}</dd></div>
+              </dl>
+              <div className="hist-card-foot">
+                <span className="hist-date">{r.date}</span>
+                <span className="hist-price">{fmt(r.price)}원</span>
+              </div>
             </div>
           );
         })}
-      </div>
-
-      <div className="faq-foot">
-        <h4>여전히 궁금한 점이 있으신가요?</h4>
-        <p>전화·문자로 문의주시면 빠르게 답변해드려요.</p>
-        <div className="footer-row">
-          <a href={SMS_HREF} className="btn-secondary"><I.Chat size={18} /> 문자 문의</a>
-          <a href={PHONE_HREF} className="btn"><I.Phone size={18} /> 전화 걸기</a>
-        </div>
       </div>
     </div>
   );
@@ -635,6 +602,50 @@ function RibbonGuide({ onClose, onPick }) {
   );
 }
 
+// ---------- RECENT SENDERS SHEET ----------
+function RecentSenders({ onClose, onPick }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, []);
+  const list = window.RECENT_SENDERS || [];
+  return (
+    <>
+      <div className="scrim" onClick={onClose} />
+      <div className="sheet" role="dialog" aria-modal="true" aria-label="최근 작성한 보내는분">
+        <div className="sheet-handle" />
+        <div className="guide-head">
+          <h3>최근 작성한 보내는분</h3>
+          <button className="sheet-close" onClick={onClose} aria-label="닫기"><I.Close size={18} /></button>
+        </div>
+        <div className="guide-body">
+          {list.length === 0 ? (
+            <div className="faq-empty" style={{ padding: "32px 0" }}>
+              <I.Clock size={28} strokeWidth={1.5} />
+              <h4>최근 작성한 내역이 없어요</h4>
+              <p>보내는분을 직접 입력해주세요.</p>
+            </div>
+          ) : (
+            <ul className="guide-list">
+              {list.map((text, i) => (
+                <li key={i}>
+                  <span className="guide-text">{text}</span>
+                  <button className="guide-apply" onClick={() => onPick(text)} aria-label={`${text} 선택`}>
+                    <I.Check size={14} strokeWidth={2.2} />
+                    선택
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ---------- ITEM SHEET ----------
 function ItemSheet({ item, onClose, onOrder }) {
   useEffect(() => {
@@ -655,7 +666,7 @@ function ItemSheet({ item, onClose, onOrder }) {
         </div>
         <div className="sheet-body">
           <div className="sheet-img">
-            <img src={item.imgLg} alt={item.name} />
+            <img src={item.imgLg || item.img} alt={item.name} />
           </div>
           <div className="sheet-meta">
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--sm-content-tertiary)" }}>
@@ -666,10 +677,8 @@ function ItemSheet({ item, onClose, onOrder }) {
             <div className="name">{item.name}</div>
             <div className="price">{fmt(item.price)}<span className="won">원</span></div>
             <div className="ribbon">
-              <I.Info size={16} strokeWidth={2.2} />
               <div>
-                실제 상품은 시즌과 재고에 따라 색감이나 구성이 조금 달라질 수 있어요.<br />
-                정확한 상품은 주문 전 전화로 확인해 주세요.
+                실제 상품은 시즌과 재고에 따라 색감이나 구성이 조금 달라질 수 있어요. 정확한 상품은 주문 전 전화로 확인해 주세요.
               </div>
             </div>
           </div>
@@ -713,7 +722,7 @@ function App() {
   // route + state
   const [route, setRoute] = useState(() => {
     const h = (location.hash || "").replace("#", "");
-    if (h === "items" || h === "order" || h === "faq") return h;
+    if (h === "items" || h === "order" || h === "history") return h;
     return "home";
   });
   const [activeTab, setActiveTab] = useState("tab1");
@@ -761,7 +770,7 @@ function App() {
   let onBack = null;
   if (route === "items") { title = "상품목록"; onBack = () => go("home"); }
   if (route === "order") { title = "주문하기"; onBack = () => go("home"); }
-  if (route === "faq")   { title = "질의응답"; onBack = () => go("home"); }
+  if (route === "history") { title = "신청내역"; onBack = () => go("home"); }
 
   return (
     <div className="app">
@@ -770,7 +779,7 @@ function App() {
         {route === "home"  && <HomeScreen go={go} openCat={openCat} onPick={setSheet} />}
         {route === "items" && <ItemsScreen activeTab={activeTab} setActiveTab={setActiveTab} onPick={setSheet} />}
         {route === "order" && <OrderScreen initialProduct={orderSeed} />}
-        {route === "faq"   && <FaqScreen />}
+        {route === "history" && <HistoryScreen />}
         {sheet && <ItemSheet item={sheet} onClose={() => setSheet(null)} onOrder={orderProduct} />}
       </div>
       <BottomNav route={route} go={go} />
