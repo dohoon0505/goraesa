@@ -9,17 +9,17 @@ const CATEGORIES = [
 ];
 const SECTIONS = {
   tab1: [
-    { kicker: "다른 사람들이 평균적으로", title: "많이 구매하는 개업화분", tag: "베스트상품", items: [{ productId: "tab1-s1-1", id: "tab1-s1-1", name: "행복을 가져다주는 해피트리", price: 99000, img: "img/tab1_item1_img1.png" }, { productId: "tab1-s1-2", id: "tab1-s1-2", name: "행복을 빌어주는 뱅갈나무", price: 99000, img: "img/tab1_item2_img1.png" }] },
+    { kicker: "다른 사람들이 평균적으로", title: "많이 선택하는 개업화분", tag: "베스트상품", items: [{ productId: "tab1-s1-1", id: "tab1-s1-1", name: "행복을 가져다주는 해피트리", price: 99000, img: "img/tab1_item1_img1.png" }, { productId: "tab1-s1-2", id: "tab1-s1-2", name: "행복을 빌어주는 뱅갈나무", price: 99000, img: "img/tab1_item2_img1.png" }] },
     { kicker: "비교적 저렴한 가격대,", title: "가볍게 선물하기 좋은 개업화분", tag: "경제적인 선택", items: [{ productId: "tab1-s2-1", id: "tab1-s2-1", name: "행복을 빌어주는 고무나무", price: 79000, img: "img/tab1_item3_img1.png" }, { productId: "tab1-s2-2", id: "tab1-s2-2", name: "키우기가 쉬운 스파트필름", price: 79000, img: "img/tab1_item4_img1.png" }] },
     { kicker: "남들과 비슷한 것이 싫다면,", title: "독보적이고 특별한 개업화분", tag: "프리미엄", items: [{ productId: "tab1-s3-1", id: "tab1-s3-1", name: "튼튼하고 오래사는 떡갈나무", price: 109000, img: "img/tab1_item5_img1.png" }, { productId: "tab1-s3-2", id: "tab1-s3-2", name: "색상이 인상적인 크로톤", price: 109000, img: "img/tab1_item6_img1.png" }] }
   ],
   tab2: [
-    { kicker: "다른 사람들이 평균적으로", title: "많이 구매하는 꽃바구니", tag: "베스트상품", items: [{ productId: "tab2-s1-1", id: "tab2-s1-1", name: "파스텔톤 혼합 꽃바구니", price: 78000, img: "img/tab2_item1_img1.png" }, { productId: "tab2-s1-2", id: "tab2-s1-2", name: "연핑크톤 장미 꽃바구니", price: 86000, img: "img/tab2_item2_img1.png" }] },
+    { kicker: "다른 사람들이 평균적으로", title: "많이 선택하는 꽃바구니", tag: "베스트상품", items: [{ productId: "tab2-s1-1", id: "tab2-s1-1", name: "파스텔톤 혼합 꽃바구니", price: 78000, img: "img/tab2_item1_img1.png" }, { productId: "tab2-s1-2", id: "tab2-s1-2", name: "연핑크톤 장미 꽃바구니", price: 86000, img: "img/tab2_item2_img1.png" }] },
     { kicker: "비교적 저렴한 가격대,", title: "가볍게 선물하기 좋은 꽃바구니", tag: "경제적인 선택", items: [{ productId: "tab2-s2-1", id: "tab2-s2-1", name: "연보라톤 혼합 꽃바구니", price: 65000, img: "img/tab2_item3_img1.png" }, { productId: "tab2-s2-2", id: "tab2-s2-2", name: "빨강화이트 꽃바구니", price: 60000, img: "img/tab2_item4_img1.png" }] },
     { kicker: "특별한 사람에게 보내는 것이라면,", title: "독보적이고 특별한 꽃바구니", tag: "프리미엄", items: [{ productId: "tab2-s3-1", id: "tab2-s3-1", name: "빨간장미 한가득 꽃바구니", price: 110000, img: "img/tab2_item5_img1.png" }, { productId: "tab2-s3-2", id: "tab2-s3-2", name: "핑크장미 한가득 꽃바구니", price: 110000, img: "img/tab2_item6_img1.png" }] }
   ],
   tab3: [
-    { kicker: "다른 사람들이 평균적으로", title: "많이 구매하는 승진취임 화분", tag: "베스트상품", items: [{ productId: "tab3-s1-1", id: "tab3-s1-1", name: "고급스러운 청자 황룡금", price: 85000, img: "img/tab3_item1_img1.png" }, { productId: "tab3-s1-2", id: "tab3-s1-2", name: "잎새가 아름다운 철골소심", price: 65000, img: "img/tab3_item2_img1.png" }] },
+    { kicker: "다른 사람들이 평균적으로", title: "많이 선택하는 승진취임 화분", tag: "베스트상품", items: [{ productId: "tab3-s1-1", id: "tab3-s1-1", name: "고급스러운 청자 황룡금", price: 85000, img: "img/tab3_item1_img1.png" }, { productId: "tab3-s1-2", id: "tab3-s1-2", name: "잎새가 아름다운 철골소심", price: 65000, img: "img/tab3_item2_img1.png" }] },
     { kicker: "종류 별 색상이 포인트,", title: "아름다운 색을 띄는 서양란 화분", tag: "COLOR", items: [{ productId: "tab3-s2-1", id: "tab3-s2-1", name: "강렬한 인상의 진핑크 호접란", price: 88000, img: "img/tab3_item3_img1.png" }, { productId: "tab3-s2-2", id: "tab3-s2-2", name: "따듯한 인상의 연핑크 호접란", price: 120000, img: "img/tab3_item4_img1.png" }] },
     { kicker: "평범하지 않은 상품을 찾으신다면,", title: "독특함을 자랑하는 동·서양란 화분", tag: "프리미엄", items: [{ productId: "tab3-s3-1", id: "tab3-s3-1", name: "넓은 잎이 특징인 산천보세", price: 65000, img: "img/tab3_item5_img1.png" }, { productId: "tab3-s3-2", id: "tab3-s3-2", name: "특색있는 노란색의 호접란", price: 120000, img: "img/tab3_item6_img1.png" }] }
   ],
