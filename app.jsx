@@ -695,6 +695,87 @@ function ItemSheet({ item, onClose, onOrder }) {
 }
 
 // ---------- App root ----------
+// ---------- Splash (앱 스플래시 화면) ----------
+function Splash({ onDone }) {
+  const [phase, setPhase] = useState("intro"); // intro → ready → exit
+  const [progress, setProgress] = useState(0);
+  const reduce = useRef(
+    typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  const exitTimer = useRef(null);
+
+  // 로딩 진행률 애니메이션 → 완료 시 ready
+  useEffect(() => {
+    if (reduce.current) {
+      setProgress(100);
+      setPhase("ready");
+      return;
+    }
+    let raf;
+    const start = performance.now();
+    const DUR = 1700;
+    const tick = (now) => {
+      const p = Math.min(100, ((now - start) / DUR) * 100);
+      setProgress(p);
+      if (p < 100) raf = requestAnimationFrame(tick);
+      else setPhase("ready");
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const enter = () => {
+    if (exitTimer.current) return;
+    setPhase("exit");
+    exitTimer.current = setTimeout(() => onDone && onDone(), 650);
+  };
+
+  // ready 도달 후 잠시 머무르다 자동 진입
+  useEffect(() => {
+    if (phase !== "ready") return;
+    const id = setTimeout(enter, 900);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  useEffect(() => () => clearTimeout(exitTimer.current), []);
+
+  return (
+    <div
+      className={"splash splash-" + phase}
+      onClick={enter}
+      role="button"
+      tabIndex={0}
+      aria-label="늘푸른바다 경조사 지원센터 시작하기"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          enter();
+        }
+      }}
+    >
+      <div className="splash-bg" aria-hidden="true" />
+      <div className="splash-scrim" aria-hidden="true" />
+      <div className="splash-content">
+        <span className="splash-eyebrow">경조사 토탈 케어 서비스</span>
+        <h1 className="splash-title">
+          <span className="splash-line splash-line-1">
+            늘푸른바다 <em>(고래사)</em>
+          </span>
+          <span className="splash-line splash-line-2">경조사 지원센터</span>
+        </h1>
+        <div className="splash-loader" aria-hidden="true">
+          <span className="splash-loader-bar" style={{ width: progress + "%" }} />
+        </div>
+        <span className={"splash-hint" + (phase === "ready" ? " on" : "")}>
+          터치하여 시작하기
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
     "brand": "#4F46E5",
@@ -728,6 +809,16 @@ function App() {
   const [activeTab, setActiveTab] = useState("tab1");
   const [sheet, setSheet] = useState(null);
   const [orderSeed, setOrderSeed] = useState(null);
+
+  // 웹 접속 시 앱 스플래시 화면 (어드민 상품 미리보기 진입 시에는 생략)
+  const [showSplash, setShowSplash] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("preview") !== "product";
+  });
+  useEffect(() => {
+    document.body.style.overflow = showSplash ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [showSplash]);
 
   // 어드민 상품 편집기 미리보기 — ?preview=product 진입 시 postMessage(draftProduct) 를 받아 시트로 표시
   useEffect(() => {
@@ -773,6 +864,8 @@ function App() {
   if (route === "history") { title = "신청내역"; onBack = () => go("home"); }
 
   return (
+    <React.Fragment>
+      {showSplash && <Splash onDone={() => setShowSplash(false)} />}
     <div className="app">
       <div className="app-frame">
         <AppBar title={title} onBack={onBack} scrolled={scrolled} />
@@ -807,6 +900,7 @@ function App() {
         </window.TweaksPanel>
       )}
     </div>
+    </React.Fragment>
   );
 }
 
