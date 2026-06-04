@@ -92,12 +92,7 @@
 
   // ---------- 앱 상태 ----------
   const S = {
-    route: (function () {
-      const h = (location.hash || "").replace("#", "");
-      if (h === "items" || h === "history") return h;
-      if (h === "order" && loadApplicant()) return "order";
-      return "home";
-    })(),
+    route: "home", // 접속(스플래시) 후 항상 홈으로 — 잔여 해시는 init에서 정리
     activeTab: "tab1",
     orderSeed: null,
     applicant: loadApplicant(),
@@ -438,7 +433,7 @@
         active.items.forEach((it) => {
           ul.appendChild(el("li", null,
             el("span", { class: "guide-text" }, it.text, it.note ? el("span", { class: "guide-note" }, " " + it.note) : null),
-            el("button", { class: "guide-apply", onClick: () => { onPick(it.text); close(); }, "aria-label": it.text + " 사용" }, I.Copy({ size: 14, strokeWidth: 2.2 }), "사용")));
+            el("button", { class: "guide-apply", onClick: () => { onPick(it.text); close(); }, "aria-label": it.text + " 선택" }, I.Check({ size: 14, strokeWidth: 2.2 }), "선택")));
         });
       }
       renderTabs(); renderItems();
@@ -768,7 +763,7 @@
       const value = form[f.id];
       const isDone = value.trim().length > 0;
       let rightNode, iconSlot = null;
-      if (f.guide) rightNode = el("button", { type: "button", class: "field-guide-btn", onClick: () => openRibbonGuide((text) => { setFieldValue("message", text); showToast("리본문구가 입력되었어요", 1800); }) }, I.Sparkle({ size: 12, strokeWidth: 2.2 }), " 경조사어 간편선택");
+      if (f.guide) rightNode = el("button", { type: "button", class: "field-guide-btn", onClick: () => openRibbonGuide((text) => { setFieldValue("message", text); showToast("리본문구가 입력되었어요", 1800); }) }, I.Sparkle({ size: 12, strokeWidth: 2.2 }), " 간편선택");
       else if (f.recent) rightNode = el("button", { type: "button", class: "field-guide-btn", onClick: () => openRecentSenders((text) => { setFieldValue("sender", text); showToast("보내는분이 입력되었어요", 1800); }) }, I.Clock({ size: 12, strokeWidth: 2.2 }), " 최근작성");
       else { iconSlot = el("span"); iconSlot.appendChild(isDone ? I.Check({ size: 16, strokeWidth: 2.4 }) : f.icon({ size: 16 })); rightNode = iconSlot; }
 
@@ -907,6 +902,8 @@
   // ---------- 초기화 ----------
   function init() {
     applyTheme();
+    // 접속 시 항상 홈으로 — 이전 탐색에서 남은 URL 해시(#items 등) 제거
+    if (location.hash) { try { history.replaceState(null, "", location.pathname + location.search); } catch (_) {} }
     const root = document.getElementById("root");
     screenHostEl = el("div");
     frameEl = el("div", { class: "app-frame" }, buildAppBar(), screenHostEl);
