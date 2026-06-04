@@ -1,6 +1,7 @@
 /* eslint-disable */
 // 자주 묻는 질문 (FAQ) 사전. 카테고리별 그룹화.
-
+// (Vanilla 전환: 순수 <script> 로 로드되어 전역 const 충돌을 막기 위해 IIFE 로 격리)
+(function () {
 const FAQ_CATEGORIES = [
   { id: "delivery", label: "배송" },
   { id: "order",    label: "주문" },
@@ -17,7 +18,7 @@ const FAQ_ITEMS = [
   {
     cat: "delivery",
     q: "배송 완료는 어떻게 확인하나요?",
-    a: "배송이 완료되면 등록된 연락처로 배송 사진과 수령인 성함을 문자로 보내드립니다. 사진은 약 1주일간 보관되며, 추후 재발송도 가능합니다.",
+    a: "배송이 완료되면 신청인의 연락처로 배송 사진과 수령인 성함을 보내드립니다.",
   },
   {
     cat: "delivery",
@@ -38,7 +39,7 @@ const FAQ_ITEMS = [
   {
     cat: "order",
     q: "주문은 어떻게 진행되나요?",
-    a: "① 상품 선택 → ② 주문서 작성(받는 분, 배송지, 리본문구) → ③ 작성한 내용으로 문자 발송. 발송된 문자를 확인한 후 담당자가 전화로 결제·세부사항을 안내해드립니다.",
+    a: "① 상품 선택 → ② 주문서 작성(받는 분, 배송지, 리본문구) → ③ 작성한 내용으로 신청 완료. 신청에 문제가 있을 경우 담당자가 전화로 세부 사항을 안내해드립니다.",
   },
   {
     cat: "order",
@@ -86,3 +87,4 @@ const FAQ_ITEMS = [
 
 window.FAQ_CATEGORIES = FAQ_CATEGORIES;
 window.FAQ_ITEMS = FAQ_ITEMS;
+})();

@@ -9,7 +9,6 @@
     "serve-static": "serve -l 3000 ."
   },
   "devDependencies": {
-    "@babel/standalone": "^7.29.7",
     "serve": "^14.2.4"
   }
 }

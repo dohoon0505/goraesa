@@ -205,6 +205,50 @@ ul { list-style: none; padding: 0; margin: 0; }
   border-radius: var(--radius-full);
 }
 
+/* 신청인 정보 카드 (hero 섹션 내부) */
+.applicant-card {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  background: var(--sm-surface-raised);
+  border: 1px solid var(--sm-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+}
+.applicant-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.applicant-card-label {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700;
+  color: var(--p-indigo-700);
+  background: var(--p-indigo-50);
+  padding: 4px 9px; border-radius: var(--radius-full);
+}
+.applicant-card-edit {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600;
+  color: var(--sm-content-tertiary);
+  padding: 4px 6px;
+  transition: color var(--motion-fast) var(--ease-standard);
+}
+.applicant-card-edit:hover { color: var(--sm-content-secondary); }
+.applicant-card-name {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--sm-content-primary);
+}
+.applicant-card-contact {
+  font-size: 13px; font-weight: 600;
+  color: var(--sm-content-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.applicant-card-meta {
+  margin-top: 4px;
+  font-size: 13px; color: var(--sm-content-tertiary);
+}
+[data-theme="dark"] .applicant-card-label { background: rgba(121,104,238,0.16); color: var(--p-indigo-300); }
+
 /* HOW section — storytelling timeline */
 .how-section { padding-top: 32px; }
 .how-eyebrow {
@@ -499,6 +543,9 @@ ul { list-style: none; padding: 0; margin: 0; }
   transition: transform var(--motion-slow) var(--ease-standard);
 }
 .product:hover .product-img img { transform: scale(1.04); }
+/* tab1~3 이미지: 파일에 박힌 흰 카드 프레임(둥근 모서리+회색 테두리)을 확대로 잘라내 카드를 가득 채움 */
+.product .product-img.framed img { transform: scale(1.14); }
+.product:hover .product-img.framed img { transform: scale(1.18); }
 .product .tag {
   position: absolute; top: 8px; left: 8px;
   font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
@@ -1215,7 +1262,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   border-top: 1px solid var(--sm-border-subtle);
   text-align: center;
 }
-.footer .num { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.footer .num { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .footer p { color: var(--sm-content-tertiary); margin: 4px 0 0; font-size: 13px; }
 .footer .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 

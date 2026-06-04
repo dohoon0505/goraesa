@@ -7,3 +7,6 @@
 # 의존성 / 임시물
 node_modules/
 .playwright-mcp/
+
+# 전환 전 React 백업 (로컬 대조/롤백용 — git 추적 제외)
+Backup React/
