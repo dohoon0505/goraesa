@@ -338,6 +338,8 @@ function ItemsScreen({ activeTab, setActiveTab, onPick }) {
 function OrderScreen({ initialProduct }) {
   const [form, setForm] = useState({
     product: initialProduct || "",
+    deliveryDate: "",
+    deliveryTime: "",
     address: "",
     recipient: "",
     sender: "",
@@ -346,6 +348,7 @@ function OrderScreen({ initialProduct }) {
   const [toast, setToast] = useState(null);
   const [guideOpen, setGuideOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (initialProduct) setForm((f) => ({ ...f, product: initialProduct }));
@@ -358,8 +361,9 @@ function OrderScreen({ initialProduct }) {
     { id: "sender",    label: "리본문구 좌측(보내는분)", hint: "EX) 00컴퍼니 대표이사 홍길동", icon: I.Edit, recent: true },
     { id: "message",   label: "리본문구 우측(경조사어)", hint: "EX) 개업을 진심으로 축하합니다", icon: I.Heart, guide: true },
   ];
-  const done = fields.filter((f) => form[f.id].trim().length > 0).length;
-  const total = fields.length;
+  const dtDone = !!(form.deliveryDate && form.deliveryTime);
+  const done = fields.filter((f) => form[f.id].trim().length > 0).length + (dtDone ? 1 : 0);
+  const total = fields.length + 1;
 
   const send = () => {
     if (done === 0) {
@@ -368,6 +372,7 @@ function OrderScreen({ initialProduct }) {
       return;
     }
     const body = [
+      "희망 배송일시: " + (dtDone ? formatDateKR(form.deliveryDate) + " " + form.deliveryTime : "미선택"),
       "상품 분류 및 이름: " + form.product,
       "보내는 장소(상세주소): " + form.address,
       "받는 분 정보(성함, 연락처): " + form.recipient,
@@ -388,7 +393,7 @@ function OrderScreen({ initialProduct }) {
       </div>
 
       <div className="progress" aria-label={`${done}/${total} 입력 완료`}>
-        {fields.map((_, i) => <span key={i} className={i < done ? "on" : ""} />)}
+        {Array.from({ length: total }).map((_, i) => <span key={i} className={i < done ? "on" : ""} />)}
       </div>
       <div style={{ padding: "8px 20px 0", display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--sm-content-tertiary)" }}>
         <span>입력 진행</span>
@@ -396,6 +401,26 @@ function OrderScreen({ initialProduct }) {
       </div>
 
       <form className="form" onSubmit={(e) => { e.preventDefault(); send(); }}>
+        <button
+          type="button"
+          className={"field selectable " + (dtDone ? "done" : "")}
+          onClick={() => setPickerOpen(true)}
+        >
+          <div className="field-label">
+            <span className="lbl">
+              <span className="stepno">1</span>
+              희망 배송일시
+            </span>
+            {dtDone
+              ? <I.Check size={16} strokeWidth={2.4} style={{ color: "var(--p-green-500)" }} />
+              : <I.Calendar size={16} style={{ color: "var(--sm-content-tertiary)" }} />}
+          </div>
+          <div className={"field-val " + (!dtDone ? "placeholder" : "")}>
+            {dtDone
+              ? `${formatDateKR(form.deliveryDate)} · ${form.deliveryTime}`
+              : "달력에서 배송 날짜와 시간을 선택하세요"}
+          </div>
+        </button>
         {fields.map((f, i) => {
           const Ic = f.icon;
           const value = form[f.id];
@@ -404,7 +429,7 @@ function OrderScreen({ initialProduct }) {
             <div className={"field " + (isDone ? "done" : "")} key={f.id}>
               <div className="field-label">
                 <span className="lbl">
-                  <span className="stepno">{i + 1}</span>
+                  <span className="stepno">{i + 2}</span>
                   {f.label}
                 </span>
                 {f.guide ? (
@@ -467,6 +492,19 @@ function OrderScreen({ initialProduct }) {
         <RecentSenders
           onClose={() => setRecentOpen(false)}
           onPick={(text) => { setForm((f) => ({ ...f, sender: text })); setRecentOpen(false); setToast("보내는분이 입력되었어요"); setTimeout(() => setToast(null), 1800); }}
+        />
+      )}
+      {pickerOpen && (
+        <DateTimePicker
+          initialDate={form.deliveryDate}
+          initialTime={form.deliveryTime}
+          onClose={() => setPickerOpen(false)}
+          onConfirm={({ date, time }) => {
+            setForm((f) => ({ ...f, deliveryDate: date, deliveryTime: time }));
+            setPickerOpen(false);
+            setToast("배송일시가 선택되었어요");
+            setTimeout(() => setToast(null), 1800);
+          }}
         />
       )}
     </div>
@@ -640,6 +678,116 @@ function RecentSenders({ onClose, onPick }) {
               ))}
             </ul>
           )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------- DATE UTILITIES ----------
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function formatDateKR(s) {
+  if (!s) return "";
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dow = ["일", "월", "화", "수", "목", "금", "토"][dt.getDay()];
+  return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")} (${dow})`;
+}
+
+// ---------- DATE·TIME PICKER (배송일시) ----------
+function DateTimePicker({ initialDate, initialTime, onClose, onConfirm }) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const [view, setView] = useState(() => {
+    const d = initialDate ? new Date(initialDate) : today;
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [date, setDate] = useState(initialDate || "");
+  const [time, setTime] = useState(initialTime || "");
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, []);
+
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) … 6
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const isToday  = (d) => d && d.getTime() === today.getTime();
+  const isPast   = (d) => d && d < today;
+  const isPicked = (d) => d && fmtDate(d) === date;
+  const dow = (d) => d.getDay();
+
+  // 당일배송 운영시간 09:00 ~ 18:30
+  const TIMES = [];
+  for (let h = 9; h <= 18; h++) {
+    TIMES.push(`${String(h).padStart(2, "0")}:00`);
+    TIMES.push(`${String(h).padStart(2, "0")}:30`);
+  }
+
+  return (
+    <>
+      <div className="scrim" onClick={onClose} />
+      <div className="sheet sheet-tall" role="dialog" aria-modal="true" aria-label="배송일시 선택">
+        <div className="sheet-handle" />
+        <div className="sheet-head">
+          <h4>배송일시 선택</h4>
+          <button className="sheet-close" onClick={onClose} aria-label="닫기"><I.Close size={18} /></button>
+        </div>
+        <div className="sheet-body" style={{ paddingBottom: 8 }}>
+          <div className="cal-head">
+            <button className="cal-nav" onClick={() => setView(new Date(year, month - 1, 1))} aria-label="이전 달"><I.Back size={18} /></button>
+            <div className="cal-title">{year}.{String(month + 1).padStart(2, "0")}</div>
+            <button className="cal-nav" onClick={() => setView(new Date(year, month + 1, 1))} aria-label="다음 달"><I.Arrow size={18} /></button>
+          </div>
+          <div className="cal-grid cal-dow">
+            {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
+              <span key={d} className={"cal-dow-lbl " + (i === 0 ? "sun" : i === 6 ? "sat" : "")}>{d}</span>
+            ))}
+          </div>
+          <div className="cal-grid">
+            {cells.map((d, i) => {
+              if (!d) return <span key={i} className="cal-cell empty" />;
+              const disabled = isPast(d);
+              const sel = isPicked(d);
+              return (
+                <button
+                  key={i}
+                  className={"cal-cell " + (sel ? "sel " : "") + (disabled ? "disabled " : "") + (isToday(d) && !sel ? "today " : "")}
+                  data-dow={dow(d)}
+                  onClick={() => { if (!disabled) setDate(fmtDate(d)); }}
+                  disabled={disabled}
+                >
+                  {d.getDate()}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="cal-section">
+            <div className="cal-section-title">시간 선택</div>
+            <div className="time-grid">
+              {TIMES.map((t) => (
+                <button key={t} className={"time-cell " + (t === time ? "sel" : "")} onClick={() => setTime(t)}>{t}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="sheet-foot">
+          <button className="btn-secondary" onClick={onClose}>취소</button>
+          <button className="btn" disabled={!date || !time} onClick={() => onConfirm({ date, time })}>
+            선택 완료
+          </button>
         </div>
       </div>
     </>

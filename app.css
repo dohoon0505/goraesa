@@ -709,6 +709,114 @@ ul { list-style: none; padding: 0; margin: 0; }
 .field input::placeholder, .field textarea::placeholder { color: var(--sm-content-tertiary); font-weight: 400; }
 .field .hint { font-size: 11px; color: var(--sm-content-tertiary); margin-top: 4px; }
 
+/* selectable field (배송일시 등 시트 트리거) */
+.field.selectable {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.field.selectable:hover { background: var(--sm-background-subtle); }
+.field-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sm-content-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+}
+.field-val.placeholder { color: var(--sm-content-tertiary); font-weight: 400; }
+
+/* ────── DateTime picker (배송일시) ────── */
+.cal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 4px 12px;
+}
+.cal-nav {
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  background: var(--sm-background-subtle);
+  color: var(--sm-content-primary);
+}
+.cal-nav:hover { background: var(--sm-interactive-brand-subtle); }
+.cal-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--sm-content-primary);
+  font-variant-numeric: tabular-nums;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-dow { margin-bottom: 4px; }
+.cal-dow-lbl {
+  height: 32px;
+  display: grid; place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sm-content-tertiary);
+}
+.cal-dow-lbl.sun { color: var(--sm-status-error); }
+.cal-dow-lbl.sat { color: var(--sm-content-tertiary); }
+.cal-cell {
+  height: 40px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sm-content-primary);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+.cal-cell.empty { background: transparent; pointer-events: none; }
+.cal-cell.disabled {
+  color: var(--sm-border-subtle);
+  cursor: not-allowed;
+}
+.cal-cell:not(.disabled):not(.empty):not(.sel):hover { background: var(--sm-interactive-brand-subtle); }
+.cal-cell.today {
+  box-shadow: inset 0 0 0 1.5px var(--sm-border-subtle);
+}
+.cal-cell.sel,
+.cal-cell.sel:hover {
+  background: var(--sm-content-primary);
+  color: var(--sm-content-inverse);
+}
+.cal-cell[data-dow="0"]:not(.empty):not(.sel):not(.disabled) { color: var(--sm-status-error); }
+.cal-section { margin-top: 20px; }
+.cal-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sm-content-primary);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.time-cell {
+  padding: 10px 0;
+  border-radius: var(--radius-sm);
+  background: var(--sm-background-subtle);
+  border: 1px solid var(--sm-border-subtle);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sm-content-primary);
+  font-variant-numeric: tabular-nums;
+  transition: all var(--motion-base) var(--ease-standard);
+}
+.time-cell:hover { background: var(--sm-interactive-brand-subtle); }
+.time-cell.sel {
+  background: var(--sm-content-primary);
+  color: var(--sm-content-inverse);
+  border-color: var(--sm-content-primary);
+}
+
 /* Notice */
 .notice {
   margin: 0 20px;
