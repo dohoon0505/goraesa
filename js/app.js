@@ -92,7 +92,13 @@
 
   // ---------- 앱 상태 ----------
   const S = {
-    route: "home", // 접속(스플래시) 후 항상 홈으로 — 잔여 해시는 init에서 정리
+    route: (function () {
+      // 새로고침 시 현재 화면 유지(해시), 해시 없는 최초 접속은 홈
+      const h = (location.hash || "").replace("#", "");
+      if (h === "items" || h === "history") return h;
+      if (h === "order" && loadApplicant()) return "order";
+      return "home";
+    })(),
     activeTab: "tab1",
     orderSeed: null,
     applicant: loadApplicant(),
@@ -410,7 +416,6 @@
 
     return el("div", null,
       el("div", { class: "hist-hero" },
-        el("span", { class: "step-pill" }, I.Doc({ size: 12, strokeWidth: 2.2 }), " 신청내역"),
         (function () { const h = el("h2"); h.appendChild(document.createTextNode("신청하신 내역을")); h.appendChild(el("br")); h.appendChild(document.createTextNode("확인할 수 있어요")); return h; })(),
         (function () { const p = el("p"); p.appendChild(document.createTextNode("경조사 지원 신청 건의 진행 상태를 확인할 수 있어요.")); p.appendChild(el("br")); p.appendChild(document.createTextNode("접수완료 되어있다면 요청한 일시에 맞춰 배송되어요.")); return p; })()),
       filtersWrap, listWrap);
@@ -803,7 +808,6 @@
     recompute();
 
     root.appendChild(el("div", { class: "order-hero" },
-      el("span", { class: "step-pill" }, I.Edit({ size: 12, strokeWidth: 2.2 }), " 주문서 작성"),
       (function () { const h = el("h2"); h.appendChild(document.createTextNode("모든 내용을 작성 후")); h.appendChild(el("br")); h.appendChild(document.createTextNode("간편하게 신청해보세요")); return h; })(),
       el("p", null, "경조사 지원에 필요한 내용을 모두 입력해주세요! 작성하신 내용에 문제가 있다면 별도로 안내드립니다.")));
     root.appendChild(progressWrap);
@@ -902,8 +906,6 @@
   // ---------- 초기화 ----------
   function init() {
     applyTheme();
-    // 접속 시 항상 홈으로 — 이전 탐색에서 남은 URL 해시(#items 등) 제거
-    if (location.hash) { try { history.replaceState(null, "", location.pathname + location.search); } catch (_) {} }
     const root = document.getElementById("root");
     screenHostEl = el("div");
     frameEl = el("div", { class: "app-frame" }, buildAppBar(), screenHostEl);
