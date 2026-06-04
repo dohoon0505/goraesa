@@ -1,7 +1,8 @@
-# 비밀 키 (서버 전용) — 절대 커밋 금지
-keystore.json
+# 환경 파일
 .env
 .env.*
+
+# keystore.json 은 사용자 요청으로 커밋함 (키는 당일만 유효 → 추후 재발급 예정)
 
 # 의존성 / 임시물
 node_modules/
