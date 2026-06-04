@@ -1,0 +1,15 @@
+{
+  "name": "goraesa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "늘푸른바다 경조사 지원센터 (무빌드 정적 사이트)",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "serve-static": "serve -l 3000 ."
+  },
+  "devDependencies": {
+    "@babel/standalone": "^7.29.7",
+    "serve": "^14.2.4"
+  }
+}

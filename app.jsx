@@ -349,6 +349,8 @@ function OrderScreen({ initialProduct }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [quickIntake, setQuickIntake] = useState(null); // "obituary" | "wedding"
+  const [productPick, setProductPick] = useState(null); // 카테고리 id (tab4/tab5)
 
   useEffect(() => {
     if (initialProduct) setForm((f) => ({ ...f, product: initialProduct }));
@@ -384,12 +386,46 @@ function OrderScreen({ initialProduct }) {
     setTimeout(() => { window.location.href = url; setTimeout(() => setToast(null), 1200); }, 400);
   };
 
+  // 즉시배송: 현재시간 기준으로 희망 배송일시를 자동 세팅
+  //  · 주문 허용시간(09:00~18:30) → 현재시간 +3시간, 시 단위 반올림
+  //  · 18:30~24:00 주문 → 익일 12:30 / 00:00~09:00 주문 → 금일 12:30
+  const applyInstantDelivery = () => {
+    const { date, time } = computeInstantDelivery();
+    setForm((f) => ({ ...f, deliveryDate: date, deliveryTime: time }));
+    setToast(`즉시배송 일시로 설정했어요 · ${formatDateKR(date)} ${time}`);
+    setTimeout(() => setToast(null), 2200);
+  };
+
+  // 간편접수 결과 반영
+  //  · 부고장 → 근조화환(tab5), 배송일시=즉시배송, 보내는 장소·받는 분 자동입력
+  //  · 청첩장 → 축하화환(tab4), 배송일시=예식시간, 보내는 장소·받는 분 자동입력
+  const handleIntake = (type, data) => {
+    setQuickIntake(null);
+    const updates = {};
+    if (data && data.deliveryAddress) updates.address = String(data.deliveryAddress).trim();
+    if (data && data.recipient) updates.recipient = String(data.recipient).trim();
+    if (type === "obituary") {
+      const dt = computeInstantDelivery();
+      updates.deliveryDate = dt.date;
+      updates.deliveryTime = dt.time;
+    } else {
+      const dt = parseISOToDateTime(data && data.ceremonyDateTime);
+      if (dt) { updates.deliveryDate = dt.date; if (dt.time) updates.deliveryTime = dt.time; }
+    }
+    setForm((f) => ({ ...f, ...updates }));
+    setProductPick(type === "obituary" ? "tab5" : "tab4");
+    setToast(type === "obituary"
+      ? "부고장 정보를 불러왔어요 · 근조화환을 선택해주세요"
+      : "청첩장 정보를 불러왔어요 · 축하화환을 선택해주세요");
+    setTimeout(() => setToast(null), 3000);
+  };
+
   return (
     <div>
       <div className="order-hero">
         <span className="step-pill"><I.Edit size={12} strokeWidth={2.2} /> 주문서 작성</span>
         <h2>모든 내용을 작성 후<br />간편하게 신청해보세요</h2>
-        <p>입력한 내용은 그대로 메시지에 복사돼요. 자세히 입력할수록 빨리 처리할 수 있어요.</p>
+        <p>경조사 지원에 필요한 내용을 모두 입력해주세요! 작성하신 내용에 문제가 있다면 별도로 안내드립니다.</p>
       </div>
 
       <div className="progress" aria-label={`${done}/${total} 입력 완료`}>
@@ -401,26 +437,39 @@ function OrderScreen({ initialProduct }) {
       </div>
 
       <form className="form" onSubmit={(e) => { e.preventDefault(); send(); }}>
-        <button
-          type="button"
-          className={"field selectable " + (dtDone ? "done" : "")}
-          onClick={() => setPickerOpen(true)}
-        >
+        <div className="quick-intake">
+          <button type="button" className="qi-btn qi-obituary" onClick={() => setQuickIntake("obituary")}>
+            <I.Memorial size={18} strokeWidth={1.9} /> 부고장 간편접수
+          </button>
+          <button type="button" className="qi-btn qi-wedding" onClick={() => setQuickIntake("wedding")}>
+            <I.Wreath size={18} strokeWidth={1.9} /> 청첩장 간편접수
+          </button>
+        </div>
+        <div className={"field selectable " + (dtDone ? "done" : "")}>
           <div className="field-label">
             <span className="lbl">
               <span className="stepno">1</span>
               희망 배송일시
             </span>
+            <button type="button" className="field-guide-btn" onClick={applyInstantDelivery}>
+              <I.Truck size={12} strokeWidth={2.2} /> 즉시배송
+            </button>
+          </div>
+          <button
+            type="button"
+            className="field-trigger"
+            onClick={() => setPickerOpen(true)}
+          >
+            <span className={"field-val " + (!dtDone ? "placeholder" : "")}>
+              {dtDone
+                ? `${formatDateKR(form.deliveryDate)} · ${form.deliveryTime}`
+                : "달력에서 배송 날짜와 시간을 선택하세요"}
+            </span>
             {dtDone
               ? <I.Check size={16} strokeWidth={2.4} style={{ color: "var(--p-green-500)" }} />
               : <I.Calendar size={16} style={{ color: "var(--sm-content-tertiary)" }} />}
-          </div>
-          <div className={"field-val " + (!dtDone ? "placeholder" : "")}>
-            {dtDone
-              ? `${formatDateKR(form.deliveryDate)} · ${form.deliveryTime}`
-              : "달력에서 배송 날짜와 시간을 선택하세요"}
-          </div>
-        </button>
+          </button>
+        </div>
         {fields.map((f, i) => {
           const Ic = f.icon;
           const value = form[f.id];
@@ -503,6 +552,25 @@ function OrderScreen({ initialProduct }) {
             setForm((f) => ({ ...f, deliveryDate: date, deliveryTime: time }));
             setPickerOpen(false);
             setToast("배송일시가 선택되었어요");
+            setTimeout(() => setToast(null), 1800);
+          }}
+        />
+      )}
+      {quickIntake && (
+        <QuickIntakeSheet
+          type={quickIntake}
+          onClose={() => setQuickIntake(null)}
+          onResult={(data) => handleIntake(quickIntake, data)}
+        />
+      )}
+      {productPick && (
+        <ProductPickerSheet
+          categoryId={productPick}
+          onClose={() => setProductPick(null)}
+          onPick={(label) => {
+            setForm((f) => ({ ...f, product: label }));
+            setProductPick(null);
+            setToast("상품이 선택되었어요");
             setTimeout(() => setToast(null), 1800);
           }}
         />
@@ -695,6 +763,35 @@ function formatDateKR(s) {
   const dow = ["일", "월", "화", "수", "목", "금", "토"][dt.getDay()];
   return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")} (${dow})`;
 }
+// 즉시배송 일시 계산 (주문 허용시간 09:00~18:30 → +3시간 정시 반올림 / 그 외 → 12:30)
+function computeInstantDelivery(base) {
+  const now = base || new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  let target;
+  if (mins >= 18 * 60 + 30) {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 12, 30);
+  } else if (mins < 9 * 60) {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 30);
+  } else {
+    target = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    if (target.getMinutes() >= 30) target.setHours(target.getHours() + 1);
+    target.setMinutes(0, 0, 0);
+  }
+  return {
+    date: fmtDate(target),
+    time: `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`,
+  };
+}
+// ISO8601 문자열 → { date: "YYYY-MM-DD", time: "HH:MM" }. 시간 없으면 time "".
+function parseISOToDateTime(iso) {
+  if (!iso || typeof iso !== "string") return null;
+  const hasTime = iso.includes("T") || /\d{1,2}:\d{2}/.test(iso);
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return null;
+  const date = fmtDate(dt);
+  if (!hasTime) return { date, time: "" };
+  return { date, time: `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` };
+}
 
 // ---------- DATE·TIME PICKER (배송일시) ----------
 function DateTimePicker({ initialDate, initialTime, onClose, onConfirm }) {
@@ -794,6 +891,176 @@ function DateTimePicker({ initialDate, initialTime, onClose, onConfirm }) {
   );
 }
 
+// ---------- QUICK INTAKE (부고장/청첩장 간편접수) ----------
+function QuickIntakeSheet({ type, onClose, onResult }) {
+  const isOb = type === "obituary";
+  const title = isOb ? "부고장 간편접수" : "청첩장 간편접수";
+  const targetName = isOb ? "부고장" : "청첩장";
+  const productName = isOb ? "근조화환" : "축하화환";
+
+  const [url, setUrl] = useState("");
+  const [keyInput, setKeyInput] = useState("");
+  const [needKey, setNeedKey] = useState(() => !(window.GORAESA_AI && window.GORAESA_AI.hasKey()));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const ctrlRef = useRef(null);
+  const busyRef = useRef(false);
+  busyRef.current = busy; // 항상 최신 busy 값을 핸들러에서 참조 (effect 재실행 없이)
+
+  // 마운트 시 1회만 등록. cleanup(=요청 abort)은 시트가 실제로 닫힐 때만 실행.
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape" && !busyRef.current) onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      if (ctrlRef.current) ctrlRef.current.abort();
+    };
+  }, []);
+
+  const shortErr = (m) => {
+    if (m.indexOf("HTTP_401") >= 0) return "API 키가 올바르지 않아요";
+    if (m.indexOf("HTTP_404") >= 0) return "모델명을 확인해주세요 (config.jsx)";
+    if (m.indexOf("HTTP_429") >= 0) return "요청이 많아요. 잠시 후 다시";
+    if (m.indexOf("PARSE_FAIL") >= 0 || m.indexOf("EMPTY") >= 0) return "정보를 인식하지 못했어요";
+    if (m.indexOf("Failed to fetch") >= 0) return "네트워크 오류 (CORS/연결)";
+    return m.slice(0, 80);
+  };
+
+  const submit = async () => {
+    setErr("");
+    if (!window.GORAESA_AI) { setErr("AI 모듈을 불러오지 못했어요."); return; }
+    if (needKey) {
+      if (!keyInput.trim()) { setErr("OpenAI API 키를 입력해주세요."); return; }
+      window.GORAESA_AI.setSessionKey(keyInput.trim());
+      setNeedKey(false);
+    }
+    if (!url.trim()) { setErr(`${targetName} 링크를 입력해주세요.`); return; }
+
+    setBusy(true);
+    const ctrl = new AbortController();
+    ctrlRef.current = ctrl;
+    try {
+      const data = await window.GORAESA_AI.extractInvitation({ type, url: url.trim(), signal: ctrl.signal });
+      onResult(data);
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      if (msg === "NO_KEY") {
+        setNeedKey(true);
+        setErr("API 키가 필요합니다. 키를 입력해주세요.");
+      } else {
+        setErr(`링크에서 정보를 가져오지 못했어요 (${shortErr(msg)}). 링크를 다시 확인해 주세요.`);
+      }
+    } finally {
+      setBusy(false);
+      ctrlRef.current = null;
+    }
+  };
+
+  return (
+    <>
+      <div className="scrim" onClick={() => { if (!busy) onClose(); }} />
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="sheet-handle" />
+        <div className="sheet-head">
+          <h4>{title}</h4>
+          <button className="sheet-close" onClick={() => { if (!busy) onClose(); }} aria-label="닫기"><I.Close size={18} /></button>
+        </div>
+        <div className="sheet-body">
+          <p className="qi-desc">
+            {targetName} 링크를 넣으면 AI가 내용을 읽어 <b>{productName}</b> 선택과
+            배송일시·보내는 장소·받는 분 정보를 자동으로 채워드려요.
+          </p>
+
+          {needKey && (
+            <label className="qi-field">
+              <span className="qi-field-lbl">OpenAI API 키</span>
+              <input
+                type="password"
+                autoComplete="off"
+                value={keyInput}
+                placeholder="sk-..."
+                onChange={(e) => setKeyInput(e.target.value)}
+              />
+              <span className="qi-hint">이 브라우저 세션에만 저장되며 OpenAI로만 전송됩니다.</span>
+            </label>
+          )}
+
+          <label className="qi-field">
+            <span className="qi-field-lbl">{targetName} 링크</span>
+            <input
+              type="url"
+              inputMode="url"
+              value={url}
+              placeholder="https://..."
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </label>
+
+          {err && <div className="qi-err"><I.Info size={14} strokeWidth={2.2} /> {err}</div>}
+        </div>
+        <div className="sheet-foot">
+          <button className="btn-secondary" onClick={() => { if (!busy) onClose(); }} disabled={busy}>취소</button>
+          <button className="btn" onClick={submit} disabled={busy}>
+            {busy ? <><span className="qi-spinner" aria-hidden="true" /> 불러오는 중…</> : <><I.Sparkle size={18} strokeWidth={2} /> 정보 가져오기</>}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------- PRODUCT PICKER (간편접수 후 화환 선택) ----------
+function ProductPickerSheet({ categoryId, onClose, onPick }) {
+  const cat = (window.CATEGORIES || []).find((c) => c.id === categoryId);
+  const sections = (window.SECTIONS && window.SECTIONS[categoryId]) || [];
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <>
+      <div className="scrim" onClick={onClose} />
+      <div className="sheet sheet-tall" role="dialog" aria-modal="true" aria-label={(cat ? cat.name : "상품") + " 선택"}>
+        <div className="sheet-handle" />
+        <div className="sheet-head">
+          <h4>{cat ? cat.name : "상품"} 선택</h4>
+          <button className="sheet-close" onClick={onClose} aria-label="닫기"><I.Close size={18} /></button>
+        </div>
+        <div className="sheet-body">
+          {sections.map((sec, si) => (
+            <div className="pp-section" key={si}>
+              <div className="pp-section-title">{sec.title}</div>
+              <div className="pp-grid">
+                {sec.items.map((it) => (
+                  <button
+                    type="button"
+                    className="pp-item"
+                    key={it.id}
+                    onClick={() => onPick(`${it.name} (${fmt(it.price)}원)`)}
+                  >
+                    <div className="pp-thumb"><img src={it.img} alt={it.name} loading="lazy" /></div>
+                    <div className="pp-meta">
+                      <div className="pp-name">{it.name}</div>
+                      <div className="pp-price">{fmt(it.price)}<span className="won">원</span></div>
+                    </div>
+                    <I.Arrow size={16} style={{ color: "var(--sm-content-tertiary)", flexShrink: 0 }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ---------- ITEM SHEET ----------
 function ItemSheet({ item, onClose, onOrder }) {
   useEffect(() => {
@@ -869,7 +1136,13 @@ function Splash({ onDone }) {
       else enter();
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    // 미리보기/백그라운드 iframe 등에서 requestAnimationFrame 이 throttle 되어도
+    // 로딩 화면에 갇히지 않도록 보장된 setTimeout 폴백으로 자동 진입.
+    const fallback = setTimeout(() => enter(), DURATION + 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(fallback);
+    };
   }, []);
 
   useEffect(() => () => clearTimeout(exitTimer.current), []);

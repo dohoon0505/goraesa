@@ -1,0 +1,8 @@
+# 비밀 키 (서버 전용) — 절대 커밋 금지
+keystore.json
+.env
+.env.*
+
+# 의존성 / 임시물
+node_modules/
+.playwright-mcp/
