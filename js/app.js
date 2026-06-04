@@ -438,7 +438,7 @@
         active.items.forEach((it) => {
           ul.appendChild(el("li", null,
             el("span", { class: "guide-text" }, it.text, it.note ? el("span", { class: "guide-note" }, " " + it.note) : null),
-            el("button", { class: "guide-apply", onClick: () => onPick(it.text), "aria-label": it.text + " 사용" }, I.Copy({ size: 14, strokeWidth: 2.2 }), "사용")));
+            el("button", { class: "guide-apply", onClick: () => { onPick(it.text); close(); }, "aria-label": it.text + " 사용" }, I.Copy({ size: 14, strokeWidth: 2.2 }), "사용")));
         });
       }
       renderTabs(); renderItems();
@@ -467,7 +467,7 @@
         const ul = el("ul", { class: "guide-list" });
         list.forEach((text) => ul.appendChild(el("li", null,
           el("span", { class: "guide-text" }, text),
-          el("button", { class: "guide-apply", onClick: () => onPick(text), "aria-label": text + " 선택" }, I.Check({ size: 14, strokeWidth: 2.2 }), "선택"))));
+          el("button", { class: "guide-apply", onClick: () => { onPick(text); close(); }, "aria-label": text + " 선택" }, I.Check({ size: 14, strokeWidth: 2.2 }), "선택"))));
         body = ul;
       }
       holder.appendChild(el("div", { class: "scrim", onClick: close }));
