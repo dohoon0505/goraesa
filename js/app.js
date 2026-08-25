@@ -103,6 +103,7 @@
     // 주문서 입력값 — 상품 선택을 위해 상품목록으로 다녀와도 유지되도록 화면 밖(S)에 보관
     orderForm: { product: "", deliveryDate: "", deliveryTime: "", address: "", recipient: "", sender: "", message: "", reason: "" },
     pickMode: false, // 주문서에서 넘어온 '상품 선택' 상태
+    pendingIntake: null, // 홈에서 간편접수한 결과 — 주문서가 열릴 때 반영
     applicant: loadApplicant(),
   };
   let pendingRoute = null;
@@ -301,7 +302,16 @@
       el("div", { class: "section-head" }, el("h3", null, "경조사 지원 신청방법"), el("p", { class: "how-sub" }, "전화 없이도, 누구나 3분이면 주문을 완성할 수 있어요.")),
       timeline, howBtn);
 
-    const root = el("div", null, heroSec, el("div", { style: { display: "none" } }), catSec, howSec);
+    // 간편접수 — 주문서 상단과 동일한 버튼을 홈에도 배치
+    const qiSec = el("section", { class: "section" },
+      el("div", { class: "section-head" },
+        el("h3", null, "부고장·청첩장을 받으셨나요?"),
+        el("span", { class: "meta" }, "링크로 자동 입력")),
+      el("div", { class: "quick-intake" },
+        el("button", { type: "button", class: "qi-btn qi-obituary", onClick: () => startIntake("obituary") }, I.Memorial({ size: 18, strokeWidth: 1.9 }), " 부고장 간편접수"),
+        el("button", { type: "button", class: "qi-btn qi-wedding", onClick: () => startIntake("wedding") }, I.Wreath({ size: 18, strokeWidth: 1.9 }), " 청첩장 간편접수")));
+
+    const root = el("div", null, heroSec, el("div", { style: { display: "none" } }), qiSec, catSec, howSec);
 
     // FAQ
     if (pickedFaqs.length > 0) {
@@ -1059,6 +1069,13 @@
 
     recompute();
 
+    // 홈에서 간편접수하고 넘어온 경우 — 화면이 붙은 뒤 이어서 처리
+    if (S.pendingIntake) {
+      const pi = S.pendingIntake;
+      S.pendingIntake = null;
+      setTimeout(() => handleIntake(pi.type, pi.data), 0);
+    }
+
     root.appendChild(el("div", { class: "order-hero" },
       (function () { const h = el("h2"); h.appendChild(document.createTextNode("모든 내용을 작성 후")); h.appendChild(el("br")); h.appendChild(document.createTextNode("간편하게 신청해보세요")); return h; })(),
       el("p", null, "경조사 지원에 필요한 내용을 모두 입력해주세요! 작성하신 내용에 문제가 있다면 별도로 안내드립니다.")));
@@ -1102,6 +1119,10 @@
     renderScreen();
   }
   function openCat(tabId) { S.activeTab = tabId; go("items"); }
+  // 홈에서 간편접수 — 결과를 들고 주문서로 이동하면 buildOrderScreen 이 이어서 처리한다.
+  function startIntake(type) {
+    openQuickIntake(type, (data) => { S.pendingIntake = { type: type, data: data }; go("order"); });
+  }
   function orderProduct(it) { S.orderForm.product = it.name + " (" + fmt(it.price) + "원)"; go("order"); }
 
   // 신청인 모달 열기 (수정/게이트 공용)
