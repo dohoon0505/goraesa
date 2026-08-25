@@ -12,6 +12,10 @@
   const PHONE_HREF = "tel:" + PHONE.replace(/[^\d]/g, "");
   const APPLICANT_KEY = "goraesa_applicant";
   const APPLICANT_TTL = 30 * 24 * 60 * 60 * 1000; // 30일
+  // 근조 상황에서 기본으로 채워지는 경조사어 (리본문구 작성가이드 첫 항목과 동일)
+  const CONDOLENCE_MSG = "삼가 故人의 冥福을 빕니다";
+  const isMemorialProduct = (it) =>
+    String((it && (it.productId || it.id)) || "").indexOf("tab5") === 0 || (it && it.category === "근조화환");
 
   // ---------- 유틸 ----------
   const fmt = (n) => n.toLocaleString("ko-KR");
@@ -1047,6 +1051,8 @@
       if (data && data.recipient) setFieldValue("recipient", String(data.recipient).trim());
       if (type === "obituary") { const dt = computeInstantDelivery(); form.deliveryDate = dt.date; form.deliveryTime = dt.time; }
       else { const dt = parseISOToDateTime(data && data.ceremonyDateTime); if (dt) { form.deliveryDate = dt.date; if (dt.time) form.deliveryTime = dt.time; } }
+      // 부고장이면 경조사어를 미리 채워준다 (이미 쓴 문구가 있으면 건드리지 않음)
+      if (type === "obituary" && !form.message.trim()) setFieldValue("message", CONDOLENCE_MSG);
       renderDtField(); recompute();
       const rule = regionRule; // updateRegionNote 가 setFieldValue("address") 시 갱신함
       if (rule && rule.blocked) {
@@ -1119,7 +1125,12 @@
   function startIntake(type) {
     openQuickIntake(type, (data) => { S.pendingIntake = { type: type, data: data }; go("order"); });
   }
-  function orderProduct(it) { S.orderForm.product = it.name + " (" + fmt(it.price) + "원)"; go("order"); }
+  function orderProduct(it) {
+    S.orderForm.product = it.name + " (" + fmt(it.price) + "원)";
+    // 근조화환을 골랐으면 경조사어를 미리 채워준다 (이미 쓴 문구가 있으면 건드리지 않음)
+    if (isMemorialProduct(it) && !S.orderForm.message.trim()) S.orderForm.message = CONDOLENCE_MSG;
+    go("order");
+  }
 
   // 신청인 모달 열기 (수정/게이트 공용)
   function openEditApplicant(fromGate) {
