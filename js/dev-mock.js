@@ -47,8 +47,8 @@
 
   // 청첩장 — 예식 일시가 배송일시로 들어가는지 확인용
   var WEDDING = [
-    { label: "서울 예식장", deliveryAddress: "서울 강남구 테헤란로 123 그랜드웨딩홀 3층 그랜드볼룸", recipient: "신랑 박지훈 · 신부 이서연 / 010-2222-3333", days: 14, hh: 12, mm: 0 },
-    { label: "부산 예식장", deliveryAddress: "부산 해운대구 센텀중앙로 55 센텀웨딩컨벤션 5층 라온홀", recipient: "신랑 김도윤 · 신부 정하은 / 010-4444-5555", days: 21, hh: 14, mm: 30 },
+    { label: "신랑·신부", deliveryAddress: "서울 강남구 테헤란로 123 그랜드웨딩홀 3층 그랜드볼룸", recipient: "신랑 박지훈 · 신부 이서연 / 010-2222-3333", days: 14, hh: 12, mm: 0 },
+    { label: "신랑·신부·혼주", deliveryAddress: "부산 해운대구 센텀중앙로 55 센텀웨딩컨벤션 5층 라온홀", recipient: "신랑 김도윤 · 신부 정하은 · 혼주 김성태 · 혼주 정미숙 / 010-4444-5555", days: 21, hh: 14, mm: 30 },
   ];
 
   var idx = { obituary: 0, wedding: 0 };

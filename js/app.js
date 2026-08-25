@@ -14,6 +14,26 @@
   const APPLICANT_TTL = 30 * 24 * 60 * 60 * 1000; // 30일
   // 근조 상황에서 기본으로 채워지는 경조사어 (리본문구 작성가이드 첫 항목과 동일)
   const CONDOLENCE_MSG = "삼가 故人의 冥福을 빕니다";
+  // 간편접수로 불러온 '받는 분' 문자열을 사람 단위 후보로 분리한다.
+  //  예) "故 김철수 / 상주 김영민 / 010-2345-6789"
+  //      → ["故 김철수", "상주 김영민 / 010-2345-6789"]
+  //  연락처만 따로 떨어져 있으면 연락처가 없는 후보들에 붙여준다.
+  const PHONE_ONLY = /^0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}$/;
+  const HAS_PHONE = /0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/;
+  function parseRecipientOptions(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return [];
+    const parts = text.split(/\s*[/·|,\n]+\s*/).map((s) => s.trim()).filter(Boolean);
+    let sharedPhone = "";
+    const people = [];
+    parts.forEach((p) => {
+      if (PHONE_ONLY.test(p)) { if (!sharedPhone) sharedPhone = p; return; }
+      people.push(p);
+    });
+    if (people.length === 0) return [];
+    return people.map((p) => (HAS_PHONE.test(p) || !sharedPhone ? p : p + " / " + sharedPhone));
+  }
+
   const isMemorialProduct = (it) =>
     String((it && (it.productId || it.id)) || "").indexOf("tab5") === 0 || (it && it.category === "근조화환");
 
@@ -493,25 +513,40 @@
   }
 
   // ---------- 시트: RecentSenders ----------
-  function openRecentSenders(onPick) {
+  // 목록에서 하나 고르는 공용 시트 (최근작성 보내는분 · 간편접수 받는 분 선택 등)
+  //  cfg: { title, desc, items[], onPick(text), onClose(), empty:{ title, desc } }
+  function openChoiceSheet(cfg) {
+    let picked = false;
     mountOverlay((holder, close) => {
-      const list = window.RECENT_SENDERS || [];
+      const list = cfg.items || [];
+      const emptyCfg = cfg.empty || {};
       let body;
       if (list.length === 0) {
         body = el("div", { class: "faq-empty", style: { padding: "32px 0" } },
-          I.Clock({ size: 28, strokeWidth: 1.5 }), el("h4", null, "최근 작성한 내역이 없어요"), el("p", null, "보내는분을 직접 입력해주세요."));
+          I.Clock({ size: 28, strokeWidth: 1.5 }),
+          el("h4", null, emptyCfg.title || "표시할 항목이 없어요"),
+          el("p", null, emptyCfg.desc || ""));
       } else {
         const ul = el("ul", { class: "guide-list" });
         list.forEach((text) => ul.appendChild(el("li", null,
           el("span", { class: "guide-text" }, text),
-          el("button", { class: "guide-apply", onClick: () => { onPick(text); close(); }, "aria-label": text + " 선택" }, I.Check({ size: 14, strokeWidth: 2.2 }), "선택"))));
+          el("button", { class: "guide-apply", onClick: () => { picked = true; cfg.onPick(text); close(); }, "aria-label": text + " 선택" }, I.Check({ size: 14, strokeWidth: 2.2 }), "선택"))));
         body = ul;
       }
-      holder.appendChild(el("div", { class: "scrim", onClick: close }));
-      holder.appendChild(el("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-label": "최근 작성한 보내는분" },
+      const dismiss = () => { close(); if (!picked && cfg.onClose) cfg.onClose(); };
+      holder.appendChild(el("div", { class: "scrim", onClick: dismiss }));
+      holder.appendChild(el("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-label": cfg.title },
         el("div", { class: "sheet-handle" }),
-        el("div", { class: "guide-head" }, el("h3", null, "최근 작성한 보내는분"), el("button", { class: "sheet-close", onClick: close, "aria-label": "닫기" }, I.Close({ size: 18 }))),
-        el("div", { class: "guide-body" }, body)));
+        el("div", { class: "guide-head" }, el("h3", null, cfg.title), el("button", { class: "sheet-close", onClick: dismiss, "aria-label": "닫기" }, I.Close({ size: 18 }))),
+        el("div", { class: "guide-body" }, cfg.desc ? el("p", { class: "qi-desc" }, cfg.desc) : null, body)));
+    });
+  }
+  function openRecentSenders(onPick) {
+    openChoiceSheet({
+      title: "최근 작성한 보내는분",
+      items: window.RECENT_SENDERS || [],
+      onPick: onPick,
+      empty: { title: "최근 작성한 내역이 없어요", desc: "보내는분을 직접 입력해주세요." },
     });
   }
 
@@ -931,7 +966,9 @@
     function showToast(msg, dur) {
       if (!msg) { toastHost.innerHTML = ""; return; }
       toastHost.innerHTML = "";
-      toastHost.appendChild(el("div", { class: "toast" }, I.Check({ size: 16, strokeWidth: 2.4 }), " " + msg));
+      // 바텀시트가 열려 있으면 시트 내용을 가리지 않도록 화면 위쪽에 띄운다
+      const overSheet = !!document.querySelector(".sheet");
+      toastHost.appendChild(el("div", { class: "toast" + (overSheet ? " toast-top" : "") }, I.Check({ size: 16, strokeWidth: 2.4 }), " " + msg));
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { toastHost.innerHTML = ""; }, dur || 2200);
     }
@@ -1047,22 +1084,42 @@
       showToast("테스트 모드입니다");
     }
     function handleIntake(type, data) {
+      const rawRecipient = String((data && data.recipient) || "").trim();
       if (data && data.deliveryAddress) setFieldValue("address", String(data.deliveryAddress).trim());
-      if (data && data.recipient) setFieldValue("recipient", String(data.recipient).trim());
       if (type === "obituary") { const dt = computeInstantDelivery(); form.deliveryDate = dt.date; form.deliveryTime = dt.time; }
       else { const dt = parseISOToDateTime(data && data.ceremonyDateTime); if (dt) { form.deliveryDate = dt.date; if (dt.time) form.deliveryTime = dt.time; } }
       // 부고장이면 경조사어를 미리 채워준다 (이미 쓴 문구가 있으면 건드리지 않음)
       if (type === "obituary" && !form.message.trim()) setFieldValue("message", CONDOLENCE_MSG);
       renderDtField(); recompute();
+
       const rule = regionRule; // updateRegionNote 가 setFieldValue("address") 시 갱신함
       if (rule && rule.blocked) {
+        if (rawRecipient) setFieldValue("recipient", rawRecipient); // 시트는 띄우지 않고 값만 보존
         showToast("배송 불가 지역이에요 · " + rule.sido + " " + rule.keywords[0] + " 지역은 신청이 제한됩니다", 3500);
         return;
       }
-      // 간편접수 시트의 close 가 body 스크롤 잠금을 해제한 뒤에 바텀시트를 열어야 잠금이 유지됨
-      setTimeout(() => {
+
+      // 간편접수 시트의 close 가 body 스크롤 잠금을 해제한 뒤에 다음 시트를 열어야 잠금이 유지됨
+      const openPicker = () => setTimeout(() => {
         openProductPicker(type === "obituary" ? "tab5" : "tab4", (label) => { setFieldValue("product", label); showToast("상품이 선택되었어요", 1800); }, { rule: type === "obituary" ? rule : null });
       }, 0);
+
+      // 불러온 받는 분이 여러 명이면 누구에게 보낼지 먼저 고르게 한다
+      const candidates = parseRecipientOptions(rawRecipient);
+      if (candidates.length >= 2) {
+        setTimeout(() => openChoiceSheet({
+          title: "받는 분 선택",
+          desc: (type === "obituary" ? "부고장" : "청첩장") + "에서 불러온 정보입니다. 화환을 받으실 분을 선택해주세요.",
+          items: candidates,
+          onPick: (text) => { setFieldValue("recipient", text); showToast("받는 분이 선택되었어요", 1800); openPicker(); },
+          onClose: () => { if (rawRecipient) setFieldValue("recipient", rawRecipient); openPicker(); },
+        }), 0);
+        // 시트 안내문과 겹치므로 별도 토스트는 띄우지 않는다
+        return;
+      }
+
+      if (rawRecipient) setFieldValue("recipient", rawRecipient);
+      openPicker();
       const restricted = rule && type === "obituary";
       showToast(type === "obituary"
         ? (restricted ? "부고장 정보를 불러왔어요 · 이 지역의 반입 가능 상품을 선택해주세요" : "부고장 정보를 불러왔어요 · 근조화환을 선택해주세요")
