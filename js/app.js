@@ -269,7 +269,7 @@
     // categories
     const catlist = el("div", { class: "catlist" });
     window.CATEGORIES.forEach((c) => {
-      const count = window.SECTIONS[c.id].filter((s) => !s.regionOnly).reduce((a, s) => a + s.items.length, 0);
+      const count = window.SECTIONS[c.id].reduce((a, s) => a + s.items.length, 0);
       catlist.appendChild(el("button", { class: "cat", onClick: () => openCat(c.id) },
         el("span", { class: "thumb" }, el("img", { src: c.photo, alt: c.name })),
         el("span", { class: "cat-text" },
@@ -337,10 +337,8 @@
     let groups = window.SECTIONS[S.activeTab];
     if (restrict) {
       groups = groups
-        .map((g) => Object.assign({}, g, { items: g.items.filter((it) => it.regionOnly ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0) }))
+        .map((g) => Object.assign({}, g, { items: g.items.filter((it) => it.substitute ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0) }))
         .filter((g) => g.items.length > 0);
-    } else {
-      groups = groups.filter((g) => !g.regionOnly);
     }
 
     const tabScroll = el("div", { class: "tabbar-scroll" });
@@ -664,11 +662,9 @@
         sections = sections
           .map((sec) => ({
             title: sec.title, tag: sec.tag,
-            items: sec.items.filter((it) => it.regionOnly ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0),
+            items: sec.items.filter((it) => it.substitute ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0),
           }))
           .filter((sec) => sec.items.length > 0);
-      } else {
-        sections = sections.filter((sec) => !sec.regionOnly);
       }
       const body = el("div", { class: "sheet-body" });
       if (rule) {

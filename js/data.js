@@ -32,11 +32,11 @@ const SECTIONS = {
     { kicker: "예의상 보내야 하는 관계라면,", title: "무난한 기본 근조화환", tag: "경제적인 선택", items: [{ productId: "tab5-s1-1", id: "tab5-s1-1", name: "기본형 근조화환 (1)", price: 50000, img: "img/tab5_basic1.jpg" }, { productId: "tab5-s1-2", id: "tab5-s1-2", name: "기본형 근조화환 (2)", price: 50000, img: "img/tab5_basic2.png" }] },
     { kicker: "조금 신경써야 하는 관계라면,", title: "풍성한 고급 근조화환", tag: "프리미엄", items: [{ productId: "tab5-s2-1", id: "tab5-s2-1", name: "고급형 근조화환 (1)", price: 60000, img: "img/tab5_premium1.jpg" }, { productId: "tab5-s2-2", id: "tab5-s2-2", name: "고급형 근조화환 (2)", price: 60000, img: "img/tab5_premium2.jpg" }] },
     { kicker: "많이 애틋하고 소중한 사람이라면,", title: "독보적인 특대·4단 근조화환", tag: "차이가 확실한", items: [{ productId: "tab5-s3-1", id: "tab5-s3-1", name: "특대형 근조화환", price: 75000, img: "img/tab5_grand1.jpg" }, { productId: "tab5-s3-2", id: "tab5-s3-2", name: "4단형 근조화환", price: 120000, img: "img/tab5_grand2_4dan.png" }] },
-    { kicker: "화환 반입 제한 지역이라면,", title: "지역 한정 대체상품", tag: "지역한정", regionOnly: true, items: [
-      { productId: "tab5-s4-1", id: "tab5-s4-1", name: "근조 오브제 1단", price: 50000, img: "img/tab5_objet1.png", kind: "objet", regionOnly: true },
-      { productId: "tab5-s4-2", id: "tab5-s4-2", name: "근조 오브제 2단", price: 75000, img: "img/tab5_objet2.png", kind: "objet", regionOnly: true },
-      { productId: "tab5-s4-3", id: "tab5-s4-3", name: "근조바구니", price: 50000, img: "img/tab5_basket.png", kind: "basket", regionOnly: true },
-      { productId: "tab5-s4-4", id: "tab5-s4-4", name: "근조 쌀화환", price: 75000, img: "img/tab5_rice.png", kind: "rice", regionOnly: true }
+    { kicker: "화환 대신 보내야 한다면,", title: "근조바구니·쌀화환·오브제", tag: "대체상품", items: [
+      { productId: "tab5-s4-1", id: "tab5-s4-1", name: "근조바구니", price: 50000, img: "img/tab5_basket.png", kind: "basket", substitute: true },
+      { productId: "tab5-s4-2", id: "tab5-s4-2", name: "근조 쌀화환", price: 75000, img: "img/tab5_rice.png", kind: "rice", substitute: true },
+      { productId: "tab5-s4-3", id: "tab5-s4-3", name: "근조 오브제 1단", price: 50000, img: "img/tab5_objet1.png", kind: "objet", substitute: true },
+      { productId: "tab5-s4-4", id: "tab5-s4-4", name: "근조 오브제 2단", price: 75000, img: "img/tab5_objet2.png", kind: "objet", substitute: true }
     ] }
   ]
 ,
