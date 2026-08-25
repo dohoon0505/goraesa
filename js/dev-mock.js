@@ -36,19 +36,20 @@
     return t.getFullYear() + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()) + "T" + pad(hh) + ":" + pad(mm);
   }
 
-  // 부고장 — 지역 반입 규칙의 주요 갈래를 차례로 확인할 수 있게 구성
+  // 부고장 — 지역 반입 규칙의 주요 갈래를 차례로 확인할 수 있게 구성.
+  // 실제 부고장·청첩장에는 연락처가 없는 경우가 더 많아 대부분 이름만 두고, 연락처가 있는 경우도 한 건 포함.
   var OBITUARY = [
-    { label: "제한 없음", deliveryAddress: "부산 해운대구 해운대로 875 해운대백병원 장례식장 3호실", recipient: "故 김철수 / 상주 김영민 / 010-2345-6789" },
-    { label: "오브제만 반입", deliveryAddress: "서울 노원구 동일로 1342 더조은요양병원 장례식장 202호", recipient: "故 이순재 / 상주 이지훈 / 010-3456-7890" },
+    { label: "제한 없음", deliveryAddress: "부산 해운대구 해운대로 875 해운대백병원 장례식장 3호실", recipient: "故 김철수 / 상주 김영민" },
+    { label: "오브제만 반입", deliveryAddress: "서울 노원구 동일로 1342 더조은요양병원 장례식장 202호", recipient: "故 이순재 / 상주 이지훈" },
     { label: "근조바구니만 반입", deliveryAddress: "대구 북구 고성로 45 가톨릭병원 장례식장 3호실", recipient: "故 박정길 / 상주 박서준 / 010-4567-8901" },
-    { label: "쌀화환만 반입", deliveryAddress: "경남 청도군 청도읍 청도장례식장 201호", recipient: "故 최영자 / 상주 최민호 / 010-5678-9012" },
-    { label: "배송 불가 지역", deliveryAddress: "충남 계룡시 엄사면 계룡장례식장 101호", recipient: "故 정만수 / 상주 정해인 / 010-6789-0123" },
+    { label: "쌀화환만 반입", deliveryAddress: "경남 청도군 청도읍 청도장례식장 201호", recipient: "故 최영자 / 상주 최민호" },
+    { label: "배송 불가 지역", deliveryAddress: "충남 계룡시 엄사면 계룡장례식장 101호", recipient: "故 정만수 / 상주 정해인" },
   ];
 
   // 청첩장 — 예식 일시가 배송일시로 들어가는지 확인용
   var WEDDING = [
-    { label: "신랑·신부", deliveryAddress: "서울 강남구 테헤란로 123 그랜드웨딩홀 3층 그랜드볼룸", recipient: "신랑 박지훈 · 신부 이서연 / 010-2222-3333", days: 14, hh: 12, mm: 0 },
-    { label: "신랑·신부·혼주", deliveryAddress: "부산 해운대구 센텀중앙로 55 센텀웨딩컨벤션 5층 라온홀", recipient: "신랑 김도윤 · 신부 정하은 · 혼주 김성태 · 혼주 정미숙 / 010-4444-5555", days: 21, hh: 14, mm: 30 },
+    { label: "신랑·신부", deliveryAddress: "서울 강남구 테헤란로 123 그랜드웨딩홀 3층 그랜드볼룸", recipient: "신랑 박현수 · 신부 이서연", days: 14, hh: 12, mm: 0 },
+    { label: "신랑·신부·혼주", deliveryAddress: "부산 해운대구 센텀중앙로 55 센텀웨딩컨벤션 5층 라온홀", recipient: "신랑 김도윤 · 신부 정하은 · 혼주 김성태 · 혼주 정미숙", days: 21, hh: 14, mm: 30 },
   ];
 
   var idx = { obituary: 0, wedding: 0 };
