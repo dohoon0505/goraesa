@@ -160,7 +160,7 @@
   }
   function buildAppBar() {
     appbarBackBtnHost = el("span");
-    appbarTitleEl = el("div", { class: "pagetitle" }, "경조사 지원센터");
+    appbarTitleEl = el("div", { class: "pagetitle" }, "경조사 접수센터");
     appbarEl = el("div", { class: "appbar" },
       appbarBackBtnHost,
       appbarTitleEl,
@@ -175,7 +175,7 @@
     if (S.route === "items") { title = "상품목록"; onBack = () => go("home"); }
     if (S.route === "order") { title = "주문하기"; onBack = () => go("home"); }
     if (S.route === "history") { title = "신청내역"; onBack = () => go("home"); }
-    appbarTitleEl.textContent = title || "경조사 지원센터";
+    appbarTitleEl.textContent = title || "경조사 접수센터";
     appbarBackBtnHost.innerHTML = "";
     if (onBack) appbarBackBtnHost.appendChild(el("button", { class: "iconbtn", onClick: onBack, "aria-label": "뒤로 가기" }, I.Back()));
   }
@@ -207,7 +207,7 @@
   // ---------- 신청인 카드 ----------
   function buildApplicantCard(applicant, onEdit) {
     if (!applicant) return null;
-    const meta = [applicant.dept, applicant.position].filter(Boolean).join(" · ");
+    const meta = [applicant.company, applicant.dept, applicant.position].filter(Boolean).join(" · ");
     return el("section", { class: "applicant-card" },
       el("div", { class: "applicant-card-head" },
         el("span", { class: "applicant-card-label" }, I.User({ size: 13, strokeWidth: 2.2 }), " 신청인 정보"),
@@ -255,7 +255,8 @@
     const homeFaqTitle = faqHome.title || "자주 묻는 질문";
 
     // hero
-    const h2 = el("h2", null, heroHeadline);
+    const h2 = el("h2");
+    String(heroHeadline).split(/\r?\n/).forEach((line, i, arr) => { h2.appendChild(document.createTextNode(line)); if (i < arr.length - 1) h2.appendChild(el("br")); });
     if (!hero.storeName && !hero.title) { h2.appendChild(el("br")); h2.appendChild(el("em", null, "3시간 당일배송")); }
     const heroP = el("p");
     heroSubhead.split(/\r?\n/).forEach((line, i, arr) => { heroP.appendChild(document.createTextNode(line)); if (i < arr.length - 1) heroP.appendChild(el("br")); });
@@ -264,7 +265,7 @@
     // categories
     const catlist = el("div", { class: "catlist" });
     window.CATEGORIES.forEach((c) => {
-      const count = window.SECTIONS[c.id].reduce((a, s) => a + s.items.length, 0);
+      const count = window.SECTIONS[c.id].filter((s) => !s.regionOnly).reduce((a, s) => a + s.items.length, 0);
       catlist.appendChild(el("button", { class: "cat", onClick: () => openCat(c.id) },
         el("span", { class: "thumb" }, el("img", { src: c.photo, alt: c.name })),
         el("span", { class: "cat-text" },
@@ -316,7 +317,7 @@
   // ---------- ITEMS ----------
   function buildItemsScreen() {
     const cat = window.CATEGORIES.find((c) => c.id === S.activeTab);
-    const groups = window.SECTIONS[S.activeTab];
+    const groups = window.SECTIONS[S.activeTab].filter((g) => !g.regionOnly);
     const catIcons = { leaf: I.Leaf, basket: I.Basket, orchid: I.Orchid, wreath: I.Wreath, memorial: I.Memorial };
 
     const tabScroll = el("div", { class: "tabbar-scroll" });
@@ -617,11 +618,36 @@
   }
 
   // ---------- 시트: ProductPicker ----------
-  function openProductPicker(categoryId, onPick) {
+  function openProductPicker(categoryId, onPick, opts) {
+    const rule = opts && opts.rule;
     mountOverlay((holder, close) => {
       const cat = (window.CATEGORIES || []).find((c) => c.id === categoryId);
-      const sections = (window.SECTIONS && window.SECTIONS[categoryId]) || [];
+      let sections = (window.SECTIONS && window.SECTIONS[categoryId]) || [];
+      // 지역 반입 제한 필터 — 근조화환(tab5)에만 대체상품 규칙 적용
+      if (rule && rule.blocked) {
+        sections = [];
+      } else if (rule && categoryId === "tab5" && rule.allowed) {
+        sections = sections
+          .map((sec) => ({
+            title: sec.title, tag: sec.tag,
+            items: sec.items.filter((it) => it.regionOnly ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0),
+          }))
+          .filter((sec) => sec.items.length > 0);
+      } else {
+        sections = sections.filter((sec) => !sec.regionOnly);
+      }
       const body = el("div", { class: "sheet-body" });
+      if (rule) {
+        body.appendChild(el("div", { class: "region-note " + (rule.blocked ? "warn" : "info") },
+          I.Info({ size: 14, strokeWidth: 2.2 }),
+          el("span", null, rule.sido + " " + rule.keywords[0] + " 지역 안내 · " + rule.note)));
+      }
+      if (sections.length === 0) {
+        body.appendChild(el("div", { class: "faq-empty", style: { padding: "32px 0" } },
+          I.Clock({ size: 28, strokeWidth: 1.5 }),
+          el("h4", null, rule && rule.blocked ? "배송 불가 지역이에요" : "노출 가능한 상품이 없어요"),
+          el("p", null, rule && rule.blocked ? "해당 지역은 상품 배송이 불가합니다." : "전화로 별도 문의해주세요.")));
+      }
       sections.forEach((sec) => {
         const grid = el("div", { class: "pp-grid" });
         sec.items.forEach((it) => grid.appendChild(el("button", { type: "button", class: "pp-item", onClick: () => { onPick(it.name + " (" + fmt(it.price) + "원)"); close(); } },
@@ -663,12 +689,21 @@
   function openApplicantModal(initial, onSave, onClose) {
     let closedVia = false;
     const api = mountOverlay((holder, close) => {
+      const COMPANIES = ["늘푸른바다", "고래사"];
+      const DEPTS = ["리테일채널 영업팀", "온라인채널 영업팀", "GA팀", "SCM팀", "해외영업팀", "대외협력팀", "구매팀"];
       let name = (initial && initial.name) || "", contact = (initial && initial.contact) || "";
-      let dept = (initial && initial.dept) || "", position = (initial && initial.position) || "";
-      const saveBtn = el("button", { class: "btn", onClick: () => { if (!(name.trim() && contact.trim())) return; closedVia = true; close(); onSave({ name: name.trim(), contact: contact.trim(), dept: dept.trim(), position: position.trim() }); } }, "저장");
-      function sync() { saveBtn.disabled = !(name.trim() && contact.trim()); }
-      const fldDept = el("input", { type: "text", value: dept, placeholder: "영업본부", onInput: (e) => { dept = e.target.value; } });
-      const fldPos = el("input", { type: "text", value: position, placeholder: "대리", onInput: (e) => { position = e.target.value; } });
+      let company = (initial && initial.company) || "";
+      let dept = (initial && DEPTS.indexOf(initial.dept) >= 0 && initial.dept) || "";
+      const saveBtn = el("button", { class: "btn", onClick: () => { if (!(company && dept && name.trim() && contact.trim())) return; closedVia = true; close(); onSave({ company: company, dept: dept, name: name.trim(), contact: contact.trim() }); } }, "저장");
+      function sync() { saveBtn.disabled = !(company && dept && name.trim() && contact.trim()); }
+      function buildSelect(placeholder, options, value, onChange) {
+        const sel = el("select", { required: true, onChange: (e) => { onChange(e.target.value); sync(); } },
+          el("option", { value: "", disabled: true, selected: !value }, placeholder));
+        options.forEach((o) => sel.appendChild(el("option", { value: o, selected: o === value }, o)));
+        return sel;
+      }
+      const fldCompany = buildSelect("회사를 선택하세요", COMPANIES, company, (v) => { company = v; });
+      const fldDept = buildSelect("부서를 선택하세요", DEPTS, dept, (v) => { dept = v; });
       const fldName = el("input", { type: "text", value: name, placeholder: "홍길동", onInput: (e) => { name = e.target.value; sync(); } });
       const fldContact = el("input", { type: "tel", inputmode: "tel", value: contact, placeholder: "010-0000-0000", onInput: (e) => { contact = e.target.value; sync(); } });
       sync();
@@ -679,8 +714,8 @@
         el("div", { class: "sheet-head" }, el("h4", null, "신청인 정보"), closeBtn),
         el("div", { class: "sheet-body" },
           el("p", { class: "qi-desc" }, "신청인 정보확인 및 배송사진 전송을 위해 신청인 정보를 수집합니다."),
+          el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "회사"), fldCompany),
           el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "부서"), fldDept),
-          el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "직책"), fldPos),
           el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "성함"), fldName),
           el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "연락처"), fldContact)),
         el("div", { class: "sheet-foot" }, saveBtn)));
@@ -696,13 +731,14 @@
 
   // ---------- ORDER ----------
   function buildOrderScreen() {
-    const form = { product: S.orderSeed || "", deliveryDate: "", deliveryTime: "", address: "", recipient: "", sender: "", message: "" };
+    const form = { product: S.orderSeed || "", deliveryDate: "", deliveryTime: "", address: "", recipient: "", sender: "", message: "", reason: "" };
     const fields = [
       { id: "product", label: "상품 분류 및 이름", hint: "EX) 개업화분 뱅갈나무", icon: I.Tag },
       { id: "address", label: "보내는 장소(상세주소)", hint: "EX) 부산 동구 고관로29번길 8 솥뚜껑삼겹살", icon: I.Pin, multiline: true },
       { id: "recipient", label: "받는 분 정보(성함, 연락처)", hint: "EX) 홍길동, 010-0000-0000", icon: I.User },
       { id: "sender", label: "리본문구 좌측(보내는분)", hint: "EX) 00컴퍼니 대표이사 홍길동", icon: I.Edit, recent: true },
       { id: "message", label: "리본문구 우측(경조사어)", hint: "EX) 개업을 진심으로 축하합니다", icon: I.Heart, guide: true },
+      { id: "reason", label: "신청사유", hint: "EX) 주요 거래처 대표 부친상 조문", icon: I.Doc, multiline: true },
     ];
     const total = fields.length + 1;
     const refs = {}; // id → { container, input, iconSlot }
@@ -755,8 +791,10 @@
       if (r.input) r.input.value = value;
       r.container.className = "field " + (value.trim().length > 0 ? "done" : "");
       if (r.iconSlot) { r.iconSlot.innerHTML = ""; r.iconSlot.appendChild(value.trim().length > 0 ? I.Check({ size: 16, strokeWidth: 2.4 }) : r.icon({ size: 16 })); }
+      if (id === "address") updateRegionNote();
       recompute();
     }
+    const regionNoteHost = el("div", { class: "region-note-host" });
     const formEl = el("form", { class: "form", onSubmit: (e) => { e.preventDefault(); send(); } });
     // 간편접수 버튼
     formEl.appendChild(el("div", { class: "quick-intake" },
@@ -781,17 +819,37 @@
         input);
       refs[f.id] = { container: container, input: input, iconSlot: iconSlot, icon: f.icon };
       formEl.appendChild(container);
+      if (f.id === "address") formEl.appendChild(regionNoteHost);
     });
+
+    // 지역별 반입상품 안내 — 주소 변경 시 재판정
+    let regionRule = null;
+    const dockBtn = el("button", { class: "btn", onClick: send }, "작성한 내용으로 신청", I.Send({ size: 18 }));
+    function updateRegionNote() {
+      regionRule = window.matchRegionRule ? window.matchRegionRule(form.address) : null;
+      regionNoteHost.innerHTML = "";
+      if (regionRule) {
+        const blocked = !!regionRule.blocked;
+        regionNoteHost.appendChild(el("div", { class: "region-note " + (blocked ? "warn" : "info") },
+          I.Info({ size: 14, strokeWidth: 2.2 }),
+          el("span", null, blocked
+            ? regionRule.sido + " " + regionRule.keywords[0] + " 지역은 배송이 불가합니다. 신청이 제한돼요."
+            : regionRule.sido + " " + regionRule.keywords[0] + " 지역 안내 · " + regionRule.note + " — 대체상품으로 신청해주세요.")));
+      }
+      dockBtn.disabled = !!(regionRule && regionRule.blocked);
+    }
 
     function onFieldInput(id, value) {
       form[id] = value;
       const r = refs[id];
       r.container.className = "field " + (value.trim().length > 0 ? "done" : "");
       if (r.iconSlot) { r.iconSlot.innerHTML = ""; r.iconSlot.appendChild(value.trim().length > 0 ? I.Check({ size: 16, strokeWidth: 2.4 }) : r.icon({ size: 16 })); }
+      if (id === "address") updateRegionNote();
       recompute();
     }
 
     function send() {
+      if (regionRule && regionRule.blocked) { showToast("배송 불가 지역이라 신청할 수 없어요"); return; }
       if (countDone() === 0) { showToast("최소 한 가지 이상 입력해주세요"); return; }
       showToast("테스트 모드입니다");
     }
@@ -801,8 +859,19 @@
       if (type === "obituary") { const dt = computeInstantDelivery(); form.deliveryDate = dt.date; form.deliveryTime = dt.time; }
       else { const dt = parseISOToDateTime(data && data.ceremonyDateTime); if (dt) { form.deliveryDate = dt.date; if (dt.time) form.deliveryTime = dt.time; } }
       renderDtField(); recompute();
-      openProductPicker(type === "obituary" ? "tab5" : "tab4", (label) => { setFieldValue("product", label); showToast("상품이 선택되었어요", 1800); });
-      showToast(type === "obituary" ? "부고장 정보를 불러왔어요 · 근조화환을 선택해주세요" : "청첩장 정보를 불러왔어요 · 축하화환을 선택해주세요", 3000);
+      const rule = regionRule; // updateRegionNote 가 setFieldValue("address") 시 갱신함
+      if (rule && rule.blocked) {
+        showToast("배송 불가 지역이에요 · " + rule.sido + " " + rule.keywords[0] + " 지역은 신청이 제한됩니다", 3500);
+        return;
+      }
+      // 간편접수 시트의 close 가 body 스크롤 잠금을 해제한 뒤에 바텀시트를 열어야 잠금이 유지됨
+      setTimeout(() => {
+        openProductPicker(type === "obituary" ? "tab5" : "tab4", (label) => { setFieldValue("product", label); showToast("상품이 선택되었어요", 1800); }, { rule: type === "obituary" ? rule : null });
+      }, 0);
+      const restricted = rule && type === "obituary";
+      showToast(type === "obituary"
+        ? (restricted ? "부고장 정보를 불러왔어요 · 이 지역의 반입 가능 상품을 선택해주세요" : "부고장 정보를 불러왔어요 · 근조화환을 선택해주세요")
+        : "청첩장 정보를 불러왔어요 · 축하화환을 선택해주세요", 3000);
     }
 
     recompute();
@@ -820,7 +889,7 @@
         el("li", null, "18:30 이후 주문은 익일 오전 중 배송돼요."),
         el("li", null, "일부 지역에서 배송비가 발생할 수 있어요."),
         el("li", null, "화분의 종류는 변경될 수 있어요."))));
-    root.appendChild(el("div", { class: "dock" }, el("button", { class: "btn", onClick: send }, "작성한 내용으로 신청", I.Send({ size: 18 }))));
+    root.appendChild(el("div", { class: "dock" }, dockBtn));
     root.appendChild(toastHost);
     return root;
   }
@@ -872,7 +941,7 @@
     let exitTimer = null, raf = null, fallback = null, doneCalled = false;
     const loaderBar = el("span", { class: "splash-loader-bar", style: { width: "0%" } });
     const countdown = el("span", { class: "splash-countdown", "aria-live": "polite" }, Math.ceil(DURATION / 1000) + "초 뒤 접속됩니다");
-    const root = el("div", { class: "splash splash-intro", role: "button", tabindex: 0, "aria-label": "늘푸른바다 경조사 지원센터 시작하기" });
+    const root = el("div", { class: "splash splash-intro", role: "button", tabindex: 0, "aria-label": "EBS/GRS 거래처 경조사 접수센터 시작하기" });
     function enter() {
       if (exitTimer) return;
       root.className = "splash splash-exit";
@@ -886,8 +955,8 @@
     root.appendChild(el("div", { class: "splash-content" },
       el("span", { class: "splash-eyebrow" }, "경조사 토탈 케어 서비스"),
       el("h1", { class: "splash-title" },
-        el("span", { class: "splash-line splash-line-1" }, el("em", null, "늘푸른바다"), " (고래사)"),
-        el("span", { class: "splash-line splash-line-2" }, "경조사 지원센터")),
+        el("span", { class: "splash-line splash-line-1" }, el("em", null, "EBS/GRS"), " 거래처"),
+        el("span", { class: "splash-line splash-line-2" }, "경조사 접수센터")),
       el("div", { class: "splash-loader", "aria-hidden": "true" }, loaderBar),
       countdown));
     document.body.appendChild(root);

@@ -1525,6 +1525,49 @@ ul { list-style: none; padding: 0; margin: 0; }
   box-shadow: 0 0 0 3px var(--p-indigo-50);
 }
 .qi-field input::placeholder, .qi-field textarea::placeholder { color: var(--sm-content-tertiary); font-weight: 400; }
+.qi-field select {
+  width: 100%;
+  border: 1px solid var(--sm-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 38px 12px 14px;
+  font-size: 15px; font-weight: 500;
+  color: var(--sm-content-primary);
+  background: var(--sm-background-default);
+  outline: none;
+  font-family: inherit;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--motion-fast) var(--ease-standard),
+              box-shadow var(--motion-fast) var(--ease-standard);
+}
+.qi-field select:focus {
+  border-color: var(--p-indigo-400);
+  box-shadow: 0 0 0 3px var(--p-indigo-50);
+}
+.qi-field select:invalid { color: var(--sm-content-tertiary); }
+
+/* 지역별 반입상품 안내 배너 */
+.region-note-host:empty { display: none; }
+.region-note {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: 12.5px; line-height: 1.5; font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  color: var(--p-indigo-700);
+  background: var(--p-indigo-50);
+  border: 1px solid var(--p-indigo-100);
+}
+.region-note svg { flex-shrink: 0; margin-top: 2px; }
+.region-note.warn {
+  color: var(--p-red-600);
+  background: var(--sm-status-error-subtle);
+  border-color: transparent;
+}
+.sheet-body .region-note { margin: 0 0 14px; }
+[data-theme="dark"] .region-note { color: var(--p-indigo-300); background: rgba(79, 70, 229, 0.14); border-color: rgba(79, 70, 229, 0.28); }
+[data-theme="dark"] .region-note.warn { color: var(--p-red-400); }
 .qi-hint { display: block; font-size: 11px; color: var(--sm-content-tertiary); margin-top: 6px; line-height: 1.4; }
 .qi-err {
   display: flex; align-items: flex-start; gap: 6px;

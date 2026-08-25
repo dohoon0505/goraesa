@@ -31,12 +31,18 @@ const SECTIONS = {
   tab5: [
     { kicker: "예의상 보내야 하는 관계라면,", title: "무난한 기본 근조화환", tag: "경제적인 선택", items: [{ productId: "tab5-s1-1", id: "tab5-s1-1", name: "기본형 근조화환 (1)", price: 50000, img: "img/tab5_basic1.jpg" }, { productId: "tab5-s1-2", id: "tab5-s1-2", name: "기본형 근조화환 (2)", price: 50000, img: "img/tab5_basic2.png" }] },
     { kicker: "조금 신경써야 하는 관계라면,", title: "풍성한 고급 근조화환", tag: "프리미엄", items: [{ productId: "tab5-s2-1", id: "tab5-s2-1", name: "고급형 근조화환 (1)", price: 60000, img: "img/tab5_premium1.jpg" }, { productId: "tab5-s2-2", id: "tab5-s2-2", name: "고급형 근조화환 (2)", price: 60000, img: "img/tab5_premium2.jpg" }] },
-    { kicker: "많이 애틋하고 소중한 사람이라면,", title: "독보적인 특대·4단 근조화환", tag: "차이가 확실한", items: [{ productId: "tab5-s3-1", id: "tab5-s3-1", name: "특대형 근조화환", price: 75000, img: "img/tab5_grand1.jpg" }, { productId: "tab5-s3-2", id: "tab5-s3-2", name: "4단형 근조화환", price: 120000, img: "img/tab5_grand2_4dan.png" }] }
+    { kicker: "많이 애틋하고 소중한 사람이라면,", title: "독보적인 특대·4단 근조화환", tag: "차이가 확실한", items: [{ productId: "tab5-s3-1", id: "tab5-s3-1", name: "특대형 근조화환", price: 75000, img: "img/tab5_grand1.jpg" }, { productId: "tab5-s3-2", id: "tab5-s3-2", name: "4단형 근조화환", price: 120000, img: "img/tab5_grand2_4dan.png" }] },
+    { kicker: "화환 반입 제한 지역이라면,", title: "지역 한정 대체상품", tag: "지역한정", regionOnly: true, items: [
+      { productId: "tab5-s4-1", id: "tab5-s4-1", name: "근조 오브제 1단", price: 50000, img: "img/tab5_objet1.png", kind: "objet", regionOnly: true },
+      { productId: "tab5-s4-2", id: "tab5-s4-2", name: "근조 오브제 2단", price: 75000, img: "img/tab5_objet2.png", kind: "objet", regionOnly: true },
+      { productId: "tab5-s4-3", id: "tab5-s4-3", name: "근조바구니", price: 50000, img: "img/tab5_basket.png", kind: "basket", regionOnly: true },
+      { productId: "tab5-s4-4", id: "tab5-s4-4", name: "근조 쌀화환", price: 75000, img: "img/tab5_rice.png", kind: "rice", regionOnly: true }
+    ] }
   ]
 ,
 };
 const HOME_SECTIONS = [
-  { id: "hero", type: "hero", title: "히어로", icon: "image", data: { storeDesc: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", storeName: "늘푸른바다(고래사)\n경조사 지원센터" } },
+  { id: "hero", type: "hero", title: "히어로", icon: "image", data: { storeDesc: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", storeName: "EBS/GRS 거래처\n경조사 접수센터" } },
   { id: "faq", type: "faq", title: "FAQ", icon: "help", data: { title: "신청 시 자주하는 질문", pickedIds: ["faq-delivery-1", "faq-delivery-2", "faq-delivery-3", "faq-delivery-4", "faq-delivery-5", "faq-order-1"] } }
 ];
 const FAQS = [
@@ -72,5 +78,5 @@ const RECENT_SENDERS = [
   "(주)고래사 마케팅팀 일동",
 ];
 Object.assign(window, { CATEGORIES, SECTIONS, HOME_SECTIONS, FAQS, FAQ_CATEGORIES, ORDER_HISTORY, RECENT_SENDERS });
-const SITE_INFO = { phone: "010-7615-2699", kakaoChannel: "", ogTitle: "늘푸른바다 경조사 지원센터", ogDescription: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", ogImage: "./img/cover.jpg" };
+const SITE_INFO = { phone: "010-7615-2699", kakaoChannel: "", ogTitle: "EBS/GRS 거래처 경조사 접수센터", ogDescription: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", ogImage: "./img/cover.jpg" };
 Object.assign(window, { SITE_INFO });
