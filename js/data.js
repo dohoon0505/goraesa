@@ -42,7 +42,7 @@ const SECTIONS = {
 ,
 };
 const HOME_SECTIONS = [
-  { id: "hero", type: "hero", title: "히어로", icon: "image", data: { storeDesc: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", storeName: "EBS/GRS 거래처\n경조사 접수센터" } },
+  { id: "hero", type: "hero", title: "히어로", icon: "image", data: { storeDesc: "임직원의 영업 서포트, EBS/GRS 거래처 관계 형성을 위한 경조사 접수센터 입니다.", storeName: "EBS/GRS 거래처\n경조사 접수센터" } },
   { id: "faq", type: "faq", title: "FAQ", icon: "help", data: { title: "신청 시 자주하는 질문", pickedIds: ["faq-delivery-1", "faq-delivery-2", "faq-delivery-3", "faq-delivery-4", "faq-delivery-5", "faq-order-1"] } }
 ];
 const FAQS = [
@@ -78,5 +78,5 @@ const RECENT_SENDERS = [
   "(주)고래사 마케팅팀 일동",
 ];
 Object.assign(window, { CATEGORIES, SECTIONS, HOME_SECTIONS, FAQS, FAQ_CATEGORIES, ORDER_HISTORY, RECENT_SENDERS });
-const SITE_INFO = { phone: "010-7615-2699", kakaoChannel: "", ogTitle: "EBS/GRS 거래처 경조사 접수센터", ogDescription: "늘푸른바다 임직원의 영업 서포트, 거래처 관계 형성을 위한 경조사 지원센터 입니다.", ogImage: "./img/cover.jpg" };
+const SITE_INFO = { phone: "010-7615-2699", kakaoChannel: "", ogTitle: "EBS/GRS 거래처 경조사 접수센터", ogDescription: "임직원의 영업 서포트, EBS/GRS 거래처 관계 형성을 위한 경조사 접수센터 입니다.", ogImage: "./img/cover.jpg" };
 Object.assign(window, { SITE_INFO });
