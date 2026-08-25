@@ -12,8 +12,17 @@
   const PHONE_HREF = "tel:" + PHONE.replace(/[^\d]/g, "");
   const APPLICANT_KEY = "goraesa_applicant";
   const APPLICANT_TTL = 30 * 24 * 60 * 60 * 1000; // 30일
-  // 근조 상황에서 기본으로 채워지는 경조사어 (리본문구 작성가이드 첫 항목과 동일)
+  // 상황별 기본 경조사어 (리본문구 작성가이드와 동일 문구)
   const CONDOLENCE_MSG = "삼가 故人의 冥福을 빕니다";
+  const WEDDING_MSG_GROOM = "祝結婚 (축결혼)"; // 신랑측
+  const WEDDING_MSG_BRIDE = "祝華婚 (축화혼)"; // 신부측
+  // 받는 분이 어느 쪽인지에 따라 결혼 문구를 고른다. 알 수 없으면(예: 혼주만 있는 경우) 비워 둔다.
+  function weddingMessageFor(recipientText) {
+    const t = String(recipientText || "");
+    if (t.indexOf("신랑") >= 0) return WEDDING_MSG_GROOM;
+    if (t.indexOf("신부") >= 0) return WEDDING_MSG_BRIDE;
+    return "";
+  }
   // 간편접수로 불러온 '받는 분' 문자열을 사람 단위 후보로 분리한다.
   //  연락처는 없는 경우가 더 많다. 그때는 이름만 그대로 후보가 된다.
   //   예) "故 김철수 / 상주 김영민"            → ["故 김철수", "상주 김영민"]
@@ -1107,6 +1116,13 @@
         openProductPicker(type === "obituary" ? "tab5" : "tab4", (label) => { setFieldValue("product", label); showToast("상품이 선택되었어요", 1800); }, { rule: type === "obituary" ? rule : null });
       }, 0);
 
+      // 청첩장은 받는 분이 정해진 뒤에야 신랑측/신부측을 알 수 있다
+      const applyWeddingMsg = (recipientText) => {
+        if (type !== "wedding" || form.message.trim()) return;
+        const m = weddingMessageFor(recipientText);
+        if (m) setFieldValue("message", m);
+      };
+
       // 불러온 받는 분이 여러 명이면 누구에게 보낼지 먼저 고르게 한다
       const candidates = parseRecipientOptions(rawRecipient);
       if (candidates.length >= 2) {
@@ -1114,7 +1130,7 @@
           title: "받는 분 선택",
           desc: (type === "obituary" ? "부고장" : "청첩장") + "에서 불러온 정보입니다. 화환을 받으실 분을 선택해주세요.",
           items: candidates,
-          onPick: (text) => { setFieldValue("recipient", text); showToast("받는 분이 선택되었어요", 1800); openPicker(); },
+          onPick: (text) => { setFieldValue("recipient", text); applyWeddingMsg(text); showToast("받는 분이 선택되었어요", 1800); openPicker(); },
           onClose: () => { if (rawRecipient) setFieldValue("recipient", rawRecipient); openPicker(); },
         }), 0);
         // 시트 안내문과 겹치므로 별도 토스트는 띄우지 않는다
@@ -1122,6 +1138,7 @@
       }
 
       if (rawRecipient) setFieldValue("recipient", rawRecipient);
+      applyWeddingMsg(rawRecipient); // 후보가 한 명뿐이므로 그 사람 기준
       openPicker();
       const restricted = rule && type === "obituary";
       showToast(type === "obituary"
