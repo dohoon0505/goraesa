@@ -739,26 +739,34 @@
 
     const root = el("div", { class: "dd" }, trigger);
 
+    // 목록 전체 높이는 열 때 한 번만 잰다.
+    // place() 안에서 maxHeight 를 풀어 다시 재면 스크롤 컨테이너가 사라져
+    // 스크롤 위치가 맨 위로 초기화되므로, 측정과 배치를 분리한다.
+    let naturalH = 0;
+    function measure() {
+      panel.style.maxHeight = "none";
+      naturalH = panel.scrollHeight;
+    }
     // 트리거 바로 아래에 띄우되, 아래 공간이 모자라면 위로 펼친다.
     function place() {
       const r = trigger.getBoundingClientRect();
       const GAP = 6, EDGE = 10;
-      panel.style.width = r.width + "px";
-      panel.style.left = r.left + "px";
-      panel.style.maxHeight = "none";
       const MIN_DOWN = 200; // 아래로 펼쳤을 때 목록이 쓸 만하게 보이는 최소 높이
-      const need = panel.scrollHeight;
       const below = window.innerHeight - r.bottom - GAP - EDGE;
       const above = r.top - GAP - EDGE;
+      panel.style.width = r.width + "px";
+      panel.style.left = r.left + "px";
       // 아래 항목을 덮는 것이 기본. 아래가 너무 좁을 때만 위로 펼친다.
-      if (need <= below || below >= MIN_DOWN || below >= above) {
+      if (naturalH <= below || below >= MIN_DOWN || below >= above) {
         panel.style.top = (r.bottom + GAP) + "px";
         panel.style.maxHeight = below + "px";
       } else {
-        panel.style.top = (r.top - GAP - Math.min(need, above)) + "px";
+        panel.style.top = (r.top - GAP - Math.min(naturalH, above)) + "px";
         panel.style.maxHeight = above + "px";
       }
     }
+    // 목록 안에서의 스크롤은 위치를 다시 잡을 필요가 없다(잡으면 스크롤이 끊긴다).
+    function onScroll(e) { if (e.target !== panel) place(); }
     function onDocPointer(e) { if (!root.contains(e.target) && !panel.contains(e.target)) setOpen(false); }
     function setOpen(next) {
       if (next === open) return;
@@ -767,19 +775,20 @@
         if (openDropdown && openDropdown !== setOpen) openDropdown(false);
         openDropdown = setOpen;
         document.body.appendChild(panel);
+        measure();
         place();
         const cur = optEls[options.indexOf(value)];
         if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" }); // 선택된 항목이 보이도록
         document.addEventListener("pointerdown", onDocPointer, true);
         window.addEventListener("resize", place);
-        window.addEventListener("scroll", place, true); // 시트 본문 스크롤에도 따라붙도록
+        window.addEventListener("scroll", onScroll, true); // 시트 본문 스크롤에는 따라붙도록
       } else {
         if (openDropdown === setOpen) openDropdown = null;
         setActive(null);
         if (panel.parentNode) panel.parentNode.removeChild(panel);
         document.removeEventListener("pointerdown", onDocPointer, true);
         window.removeEventListener("resize", place);
-        window.removeEventListener("scroll", place, true);
+        window.removeEventListener("scroll", onScroll, true);
       }
       root.className = "dd" + (open ? " open" : "");
       trigger.setAttribute("aria-expanded", open ? "true" : "false");

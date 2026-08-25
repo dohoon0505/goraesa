@@ -1586,7 +1586,9 @@ ul { list-style: none; padding: 0; margin: 0; }
 .dd-opt:hover, .dd-opt:focus-visible { background: var(--sm-background-subtle); outline: none; }
 /* 끌고 지나가는 동안 손가락 아래 항목을 강조 */
 .dd-opt.active { background: var(--p-indigo-50); color: var(--p-indigo-700); }
-.dd-opt { touch-action: none; -webkit-user-select: none; user-select: none; }
+/* 항목에는 touch-action 을 걸지 않는다 — 걸면 목록 안에서 손가락 스크롤이 막힌다.
+   끌어서 선택하는 동안엔 포인터가 트리거에 잡혀 있어 스크롤이 끼어들지 않는다. */
+.dd-opt { -webkit-user-select: none; user-select: none; }
 .dd-opt > svg { flex-shrink: 0; opacity: 0; color: var(--p-indigo-500); }
 .dd-opt.sel { color: var(--p-indigo-600); font-weight: 700; }
 .dd-opt.sel > svg { opacity: 1; }
