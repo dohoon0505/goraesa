@@ -100,7 +100,9 @@
       return "home";
     })(),
     activeTab: "tab1",
-    orderSeed: null,
+    // 주문서 입력값 — 상품 선택을 위해 상품목록으로 다녀와도 유지되도록 화면 밖(S)에 보관
+    orderForm: { product: "", deliveryDate: "", deliveryTime: "", address: "", recipient: "", sender: "", message: "", reason: "" },
+    pickMode: false, // 주문서에서 넘어온 '상품 선택' 상태
     applicant: loadApplicant(),
   };
   let pendingRoute = null;
@@ -172,7 +174,7 @@
   }
   function updateAppBar() {
     let title = null, onBack = null;
-    if (S.route === "items") { title = "상품목록"; onBack = () => go("home"); }
+    if (S.route === "items") { title = S.pickMode ? "상품 선택" : "상품목록"; onBack = () => go(S.pickMode ? "order" : "home"); }
     if (S.route === "order") { title = "주문하기"; onBack = () => go("home"); }
     if (S.route === "history") { title = "신청내역"; onBack = () => go("home"); }
     appbarTitleEl.textContent = title || "경조사 접수센터";
@@ -317,8 +319,18 @@
   // ---------- ITEMS ----------
   function buildItemsScreen() {
     const cat = window.CATEGORIES.find((c) => c.id === S.activeTab);
-    const groups = window.SECTIONS[S.activeTab].filter((g) => !g.regionOnly);
     const catIcons = { leaf: I.Leaf, basket: I.Basket, orchid: I.Orchid, wreath: I.Wreath, memorial: I.Memorial };
+    // 주문서에서 넘어온 선택 모드에서는 주소의 지역 반입 규칙을 근조화환에 그대로 적용
+    const rule = S.pickMode && window.matchRegionRule ? window.matchRegionRule(S.orderForm.address) : null;
+    const restrict = rule && !rule.blocked && rule.allowed && S.activeTab === "tab5";
+    let groups = window.SECTIONS[S.activeTab];
+    if (restrict) {
+      groups = groups
+        .map((g) => Object.assign({}, g, { items: g.items.filter((it) => it.regionOnly ? rule.allowed.indexOf(it.kind) >= 0 : rule.allowed.indexOf("3dan") >= 0) }))
+        .filter((g) => g.items.length > 0);
+    } else {
+      groups = groups.filter((g) => !g.regionOnly);
+    }
 
     const tabScroll = el("div", { class: "tabbar-scroll" });
     window.CATEGORIES.forEach((c) => {
@@ -327,6 +339,17 @@
     const root = el("div", null,
       el("div", { class: "tabbar" }, tabScroll),
       el("div", { class: "cat-banner" }, el("img", { src: cat.banner, alt: cat.name })));
+
+    if (S.pickMode) {
+      const blocked = !!(rule && rule.blocked);
+      root.appendChild(el("div", { class: "region-note " + (blocked ? "warn" : "info"), style: { margin: "14px 20px 0" } },
+        I.Info({ size: 14, strokeWidth: 2.2 }),
+        el("span", null, blocked
+          ? rule.sido + " " + rule.keywords[0] + " 지역은 배송이 불가합니다. 보내는 장소를 확인해주세요."
+          : restrict
+            ? rule.sido + " " + rule.keywords[0] + " 지역 안내 · " + rule.note + " — 반입 가능한 상품만 표시됩니다."
+            : "주문서에 넣을 상품을 선택해주세요. 상품을 누르면 선택할 수 있어요.")));
+    }
 
     groups.forEach((g) => {
       const CatIc = catIcons[cat.icon];
@@ -681,7 +704,7 @@
             el("div", { class: "ribbon" }, el("div", null, "실제 상품은 시즌과 재고에 따라 색감이나 구성이 조금 달라질 수 있어요. 정확한 상품은 주문 전 전화로 확인해 주세요.")))),
         el("div", { class: "sheet-foot" },
           el("button", { class: "btn-secondary", onClick: close }, "닫기"),
-          el("button", { class: "btn", onClick: () => { close(); orderProduct(item); } }, I.Edit({ size: 18, strokeWidth: 2 }), " 이 상품으로 주문하기"))));
+          el("button", { class: "btn", onClick: () => { close(); orderProduct(item); } }, I.Edit({ size: 18, strokeWidth: 2 }), S.pickMode ? " 이 상품으로 선택" : " 이 상품으로 주문하기"))));
     });
   }
 
@@ -731,9 +754,10 @@
 
   // ---------- ORDER ----------
   function buildOrderScreen() {
-    const form = { product: S.orderSeed || "", deliveryDate: "", deliveryTime: "", address: "", recipient: "", sender: "", message: "", reason: "" };
+    S.pickMode = false; // 주문서로 돌아오면 상품 선택 모드 종료
+    const form = S.orderForm;
     const fields = [
-      { id: "product", label: "상품 분류 및 이름", hint: "EX) 개업화분 뱅갈나무", icon: I.Tag },
+      { id: "product", label: "상품 분류 및 이름", hint: "상품목록에서 보낼 상품을 선택하세요", icon: I.Tag, select: true, onSelect: () => { S.pickMode = true; go("items"); } },
       { id: "address", label: "보내는 장소(상세주소)", hint: "EX) 부산 동구 고관로29번길 8 솥뚜껑삼겹살", icon: I.Pin, multiline: true },
       { id: "recipient", label: "받는 분 정보(성함, 연락처)", hint: "EX) 홍길동, 010-0000-0000", icon: I.User },
       { id: "sender", label: "리본문구 좌측(보내는분)", hint: "EX) 00컴퍼니 대표이사 홍길동", icon: I.Edit, recent: true },
@@ -788,9 +812,11 @@
     function setFieldValue(id, value) {
       form[id] = value;
       const r = refs[id];
+      const done = value.trim().length > 0;
       if (r.input) r.input.value = value;
-      r.container.className = "field " + (value.trim().length > 0 ? "done" : "");
-      if (r.iconSlot) { r.iconSlot.innerHTML = ""; r.iconSlot.appendChild(value.trim().length > 0 ? I.Check({ size: 16, strokeWidth: 2.4 }) : r.icon({ size: 16 })); }
+      if (r.valSpan) { r.valSpan.className = "field-val " + (done ? "" : "placeholder"); r.valSpan.textContent = done ? value : r.hint; }
+      r.container.className = "field " + (r.select ? "selectable " : "") + (done ? "done" : "");
+      if (r.iconSlot) { r.iconSlot.innerHTML = ""; r.iconSlot.appendChild(done ? I.Check({ size: 16, strokeWidth: 2.4 }) : r.icon({ size: 16 })); }
       if (id === "address") updateRegionNote();
       recompute();
     }
@@ -810,14 +836,24 @@
       else if (f.recent) rightNode = el("button", { type: "button", class: "field-guide-btn", onClick: () => openRecentSenders((text) => { setFieldValue("sender", text); showToast("보내는분이 입력되었어요", 1800); }) }, I.Clock({ size: 12, strokeWidth: 2.2 }), " 최근작성");
       else { iconSlot = el("span"); iconSlot.appendChild(isDone ? I.Check({ size: 16, strokeWidth: 2.4 }) : f.icon({ size: 16 })); rightNode = iconSlot; }
 
-      const input = f.multiline
-        ? el("textarea", { rows: 2, placeholder: f.hint, onInput: (e) => onFieldInput(f.id, e.target.value) })
-        : el("input", { type: "text", placeholder: f.hint, onInput: (e) => onFieldInput(f.id, e.target.value) });
-      input.value = value;
-      const container = el("div", { class: "field " + (isDone ? "done" : "") },
-        el("div", { class: "field-label" }, el("span", { class: "lbl" }, el("span", { class: "stepno" }, String(i + 2)), " " + f.label), rightNode),
-        input);
-      refs[f.id] = { container: container, input: input, iconSlot: iconSlot, icon: f.icon };
+      const labelRow = el("div", { class: "field-label" },
+        el("span", { class: "lbl" }, el("span", { class: "stepno" }, String(i + 2)), " " + f.label), rightNode);
+
+      let input = null, valSpan = null, container;
+      if (f.select) {
+        // 직접 입력이 아닌 선택형 — 누르면 상품목록으로 이동
+        valSpan = el("span", { class: "field-val " + (isDone ? "" : "placeholder") }, isDone ? value : f.hint);
+        container = el("div", { class: "field selectable " + (isDone ? "done" : "") },
+          labelRow,
+          el("button", { type: "button", class: "field-trigger", onClick: f.onSelect }, valSpan, I.Arrow({ size: 18 })));
+      } else {
+        input = f.multiline
+          ? el("textarea", { rows: 2, placeholder: f.hint, onInput: (e) => onFieldInput(f.id, e.target.value) })
+          : el("input", { type: "text", placeholder: f.hint, onInput: (e) => onFieldInput(f.id, e.target.value) });
+        input.value = value;
+        container = el("div", { class: "field " + (isDone ? "done" : "") }, labelRow, input);
+      }
+      refs[f.id] = { container: container, input: input, valSpan: valSpan, iconSlot: iconSlot, icon: f.icon, hint: f.hint, select: !!f.select };
       formEl.appendChild(container);
       if (f.id === "address") formEl.appendChild(regionNoteHost);
     });
@@ -913,12 +949,13 @@
       openEditApplicant(true);
       return;
     }
+    if (r !== "items") S.pickMode = false; // 상품목록을 벗어나면 선택 모드 해제
     S.route = r;
     location.hash = r === "home" ? "" : r;
     renderScreen();
   }
   function openCat(tabId) { S.activeTab = tabId; go("items"); }
-  function orderProduct(it) { S.orderSeed = it.name + " (" + fmt(it.price) + "원)"; go("order"); }
+  function orderProduct(it) { S.orderForm.product = it.name + " (" + fmt(it.price) + "원)"; go("order"); }
 
   // 신청인 모달 열기 (수정/게이트 공용)
   function openEditApplicant(fromGate) {
