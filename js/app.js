@@ -130,6 +130,7 @@
     const onKey = (e) => { if (e.key === "Escape" && (!escapeAllowed || escapeAllowed())) close(); };
     function close() {
       if (closed) return; closed = true;
+      if (openDropdown) openDropdown(false); // body 에 떠 있는 드롭다운이 남지 않도록
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
       if (holder.parentNode) holder.parentNode.removeChild(holder);
@@ -709,19 +710,20 @@
   }
 
   // ---------- 커스텀 드롭다운 ----------
-  // 시트 본문(.sheet-body)이 스크롤 컨테이너라 절대 위치 패널은 잘린다.
-  // 그래서 열리면 아래 내용을 밀어내는 인라인 확장형으로 동작한다.
+  // 목록은 시트를 늘리지 않고 아래 항목을 덮는 오버레이로 뜬다.
+  // 시트 본문(.sheet-body)이 스크롤 컨테이너라 그 안에 두면 잘리므로,
+  // body 에 붙이고 트리거 위치에 맞춰 fixed 로 띄운다.
+  // 선택은 두 가지 — 누른 채 끌어서 원하는 항목 위에서 떼거나, 열어 둔 뒤 탭.
   let openDropdown = null; // 동시에 하나만 열리도록
   function buildDropdown(cfg) {
     const options = cfg.options || [];
     let value = cfg.value || "";
-    let open = false;
+    let open = false, dragging = false, pickedByDrag = false, activeOpt = null;
 
     const valSpan = el("span", { class: "dd-val" + (value ? "" : " placeholder") }, value || cfg.placeholder);
     const trigger = el("button", {
       type: "button", class: "dd-trigger",
       "aria-haspopup": "listbox", "aria-expanded": "false",
-      onClick: () => setOpen(!open),
     }, valSpan, el("span", { class: "dd-caret", "aria-hidden": "true" }, I.Chevron({ size: 18, strokeWidth: 2.2 })));
 
     const panel = el("div", { class: "dd-panel", role: "listbox", "aria-label": cfg.label || cfg.placeholder });
@@ -729,7 +731,7 @@
       const b = el("button", {
         type: "button", class: "dd-opt" + (o === value ? " sel" : ""),
         role: "option", "aria-selected": o === value ? "true" : "false",
-        onClick: () => pick(o),
+        onClick: () => { if (pickedByDrag) return; pick(o); },
       }, el("span", null, o), I.Check({ size: 16, strokeWidth: 2.4 }));
       panel.appendChild(b);
       return b;
@@ -737,24 +739,64 @@
 
     const root = el("div", { class: "dd" }, trigger);
 
-    function onDocPointer(e) { if (!root.contains(e.target)) setOpen(false); }
+    // 트리거 바로 아래에 띄우되, 아래 공간이 모자라면 위로 펼친다.
+    function place() {
+      const r = trigger.getBoundingClientRect();
+      const GAP = 6, EDGE = 10;
+      panel.style.width = r.width + "px";
+      panel.style.left = r.left + "px";
+      panel.style.maxHeight = "none";
+      const MIN_DOWN = 200; // 아래로 펼쳤을 때 목록이 쓸 만하게 보이는 최소 높이
+      const need = panel.scrollHeight;
+      const below = window.innerHeight - r.bottom - GAP - EDGE;
+      const above = r.top - GAP - EDGE;
+      // 아래 항목을 덮는 것이 기본. 아래가 너무 좁을 때만 위로 펼친다.
+      if (need <= below || below >= MIN_DOWN || below >= above) {
+        panel.style.top = (r.bottom + GAP) + "px";
+        panel.style.maxHeight = below + "px";
+      } else {
+        panel.style.top = (r.top - GAP - Math.min(need, above)) + "px";
+        panel.style.maxHeight = above + "px";
+      }
+    }
+    function onDocPointer(e) { if (!root.contains(e.target) && !panel.contains(e.target)) setOpen(false); }
     function setOpen(next) {
       if (next === open) return;
       open = next;
       if (open) {
         if (openDropdown && openDropdown !== setOpen) openDropdown(false);
         openDropdown = setOpen;
-        root.appendChild(panel);
+        document.body.appendChild(panel);
+        place();
+        const cur = optEls[options.indexOf(value)];
+        if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" }); // 선택된 항목이 보이도록
         document.addEventListener("pointerdown", onDocPointer, true);
+        window.addEventListener("resize", place);
+        window.addEventListener("scroll", place, true); // 시트 본문 스크롤에도 따라붙도록
       } else {
         if (openDropdown === setOpen) openDropdown = null;
+        setActive(null);
         if (panel.parentNode) panel.parentNode.removeChild(panel);
         document.removeEventListener("pointerdown", onDocPointer, true);
+        window.removeEventListener("resize", place);
+        window.removeEventListener("scroll", place, true);
       }
       root.className = "dd" + (open ? " open" : "");
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
-      // 열린 직후 즉시 스크롤 — 부드러운 스크롤은 이동 중 오탭을 유발하므로 쓰지 않는다
-      if (open) setTimeout(() => { if (panel.scrollIntoView) panel.scrollIntoView({ block: "nearest" }); }, 0);
+    }
+    function setActive(o) {
+      if (activeOpt === o) return;
+      if (activeOpt) activeOpt.classList.remove("active");
+      activeOpt = o;
+      if (activeOpt) {
+        activeOpt.classList.add("active");
+        if (activeOpt.scrollIntoView) activeOpt.scrollIntoView({ block: "nearest" }); // 끝에 닿으면 목록이 따라 스크롤
+      }
+    }
+    function optAt(x, y) {
+      const t = document.elementFromPoint(x, y);
+      const o = t && t.closest ? t.closest(".dd-opt") : null;
+      return o && panel.contains(o) ? o : null;
     }
     function pick(o) {
       value = o;
@@ -769,8 +811,34 @@
       trigger.focus();
       if (cfg.onChange) cfg.onChange(o);
     }
-    // 열려 있을 때의 키보드 조작 — Escape 가 시트까지 닫지 않도록 여기서 소비한다.
-    root.addEventListener("keydown", (e) => {
+
+    // 누른 채 끌어서 선택 — 포인터를 트리거에 가둬 두고 좌표로 항목을 찾는다.
+    trigger.addEventListener("pointerdown", (e) => {
+      if (e.button != null && e.button > 0) return;
+      e.preventDefault();
+      pickedByDrag = false;
+      trigger.focus();
+      if (open) { setOpen(false); return; }
+      setOpen(true);
+      dragging = true;
+      try { trigger.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    trigger.addEventListener("pointermove", (e) => { if (dragging) setActive(optAt(e.clientX, e.clientY)); });
+    trigger.addEventListener("pointerup", (e) => {
+      if (!dragging) return;
+      dragging = false;
+      try { trigger.releasePointerCapture(e.pointerId); } catch (_) {}
+      const o = optAt(e.clientX, e.clientY);
+      setActive(null);
+      // 항목 위에서 뗐으면 선택, 트리거 위에서 뗐으면(그냥 탭) 목록을 열어 둔다.
+      if (o) { pickedByDrag = true; pick(options[optEls.indexOf(o)]); setTimeout(() => { pickedByDrag = false; }, 0); }
+    });
+    trigger.addEventListener("pointercancel", () => { dragging = false; setActive(null); });
+    // 키보드(Enter/Space)로 누른 경우엔 포인터 이벤트가 없으므로 여기서 연다.
+    trigger.addEventListener("click", (e) => { if (e.detail === 0) setOpen(!open); });
+
+    // 화살표 이동 / Escape 닫기 — Escape 가 시트까지 닫지 않도록 여기서 소비한다.
+    function onKeydown(e) {
       if (e.key === "Escape" && open) { e.stopPropagation(); setOpen(false); trigger.focus(); return; }
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
       e.preventDefault();
@@ -778,7 +846,9 @@
       const cur = optEls.indexOf(document.activeElement);
       const next = e.key === "ArrowDown" ? cur + 1 : cur - 1;
       if (optEls[next]) optEls[next].focus();
-    });
+    }
+    root.addEventListener("keydown", onKeydown);
+    panel.addEventListener("keydown", onKeydown);
     return root;
   }
 
