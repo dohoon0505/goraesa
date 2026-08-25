@@ -22,6 +22,7 @@
     Send: makeIcon('<path fill-rule="evenodd" clip-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" />', { fill: "currentColor", strokeWidth: 0 }),
     Arrow: makeIcon('<path d="M9 6l6 6-6 6" />'),
     Back: makeIcon('<path d="M15 6l-6 6 6 6" />'),
+    Chevron: makeIcon('<path d="M6 9l6 6 6-6" />'),
     Close: makeIcon('<path d="M6 6l12 12M18 6l-12 12" />'),
     Check: makeIcon('<path d="M5 12l5 5 9-10" />'),
     Info: makeIcon('<circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" />'),

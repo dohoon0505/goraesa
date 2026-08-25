@@ -1525,28 +1525,66 @@ ul { list-style: none; padding: 0; margin: 0; }
   box-shadow: 0 0 0 3px var(--p-indigo-50);
 }
 .qi-field input::placeholder, .qi-field textarea::placeholder { color: var(--sm-content-tertiary); font-weight: 400; }
-.qi-field select {
+/* 커스텀 드롭다운 (신청인 정보 회사·부서) */
+.dd-trigger {
   width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   border: 1px solid var(--sm-border-subtle);
   border-radius: var(--radius-md);
-  padding: 12px 38px 12px 14px;
+  padding: 12px 14px;
   font-size: 15px; font-weight: 500;
   color: var(--sm-content-primary);
   background: var(--sm-background-default);
-  outline: none;
   font-family: inherit;
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  text-align: left;
+  cursor: pointer;
   transition: border-color var(--motion-fast) var(--ease-standard),
               box-shadow var(--motion-fast) var(--ease-standard);
 }
-.qi-field select:focus {
+.dd-trigger:hover { border-color: var(--sm-border-default); }
+.dd.open .dd-trigger, .dd-trigger:focus-visible {
   border-color: var(--p-indigo-400);
   box-shadow: 0 0 0 3px var(--p-indigo-50);
 }
-.qi-field select:invalid { color: var(--sm-content-tertiary); }
+.dd-val { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-val.placeholder { color: var(--sm-content-tertiary); font-weight: 400; }
+.dd-caret {
+  display: grid; place-items: center; flex-shrink: 0;
+  color: var(--sm-content-tertiary);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+.dd.open .dd-caret { transform: rotate(180deg); color: var(--p-indigo-500); }
+.dd-panel {
+  margin-top: 6px;
+  border: 1px solid var(--sm-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--sm-background-default);
+  max-height: 340px; /* 현재 항목 수(최대 7개)는 스크롤 없이 모두 보이도록 — 시트 안 중첩 스크롤 방지 */
+  overflow-y: auto;
+  box-shadow: 0 12px 28px -12px rgba(27,29,36,0.22);
+  animation: dd-in 160ms var(--ease-decelerate);
+}
+@keyframes dd-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.dd-opt {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px;
+  font-size: 15px; font-weight: 500;
+  color: var(--sm-content-secondary);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-instant) var(--ease-standard);
+}
+.dd-opt + .dd-opt { border-top: 1px solid var(--sm-border-subtle); }
+.dd-opt:hover, .dd-opt:focus-visible { background: var(--sm-background-subtle); outline: none; }
+.dd-opt > svg { flex-shrink: 0; opacity: 0; color: var(--p-indigo-500); }
+.dd-opt.sel { color: var(--p-indigo-600); font-weight: 700; }
+.dd-opt.sel > svg { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .dd-panel { animation: none; }
+}
 
 /* 지역별 반입상품 안내 배너 */
 .region-note-host:empty { display: none; }

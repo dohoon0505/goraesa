@@ -708,6 +708,80 @@
     });
   }
 
+  // ---------- 커스텀 드롭다운 ----------
+  // 시트 본문(.sheet-body)이 스크롤 컨테이너라 절대 위치 패널은 잘린다.
+  // 그래서 열리면 아래 내용을 밀어내는 인라인 확장형으로 동작한다.
+  let openDropdown = null; // 동시에 하나만 열리도록
+  function buildDropdown(cfg) {
+    const options = cfg.options || [];
+    let value = cfg.value || "";
+    let open = false;
+
+    const valSpan = el("span", { class: "dd-val" + (value ? "" : " placeholder") }, value || cfg.placeholder);
+    const trigger = el("button", {
+      type: "button", class: "dd-trigger",
+      "aria-haspopup": "listbox", "aria-expanded": "false",
+      onClick: () => setOpen(!open),
+    }, valSpan, el("span", { class: "dd-caret", "aria-hidden": "true" }, I.Chevron({ size: 18, strokeWidth: 2.2 })));
+
+    const panel = el("div", { class: "dd-panel", role: "listbox", "aria-label": cfg.label || cfg.placeholder });
+    const optEls = options.map((o) => {
+      const b = el("button", {
+        type: "button", class: "dd-opt" + (o === value ? " sel" : ""),
+        role: "option", "aria-selected": o === value ? "true" : "false",
+        onClick: () => pick(o),
+      }, el("span", null, o), I.Check({ size: 16, strokeWidth: 2.4 }));
+      panel.appendChild(b);
+      return b;
+    });
+
+    const root = el("div", { class: "dd" }, trigger);
+
+    function onDocPointer(e) { if (!root.contains(e.target)) setOpen(false); }
+    function setOpen(next) {
+      if (next === open) return;
+      open = next;
+      if (open) {
+        if (openDropdown && openDropdown !== setOpen) openDropdown(false);
+        openDropdown = setOpen;
+        root.appendChild(panel);
+        document.addEventListener("pointerdown", onDocPointer, true);
+      } else {
+        if (openDropdown === setOpen) openDropdown = null;
+        if (panel.parentNode) panel.parentNode.removeChild(panel);
+        document.removeEventListener("pointerdown", onDocPointer, true);
+      }
+      root.className = "dd" + (open ? " open" : "");
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      // 열린 직후 즉시 스크롤 — 부드러운 스크롤은 이동 중 오탭을 유발하므로 쓰지 않는다
+      if (open) setTimeout(() => { if (panel.scrollIntoView) panel.scrollIntoView({ block: "nearest" }); }, 0);
+    }
+    function pick(o) {
+      value = o;
+      valSpan.className = "dd-val";
+      valSpan.textContent = o;
+      optEls.forEach((b, i) => {
+        const sel = options[i] === value;
+        b.className = "dd-opt" + (sel ? " sel" : "");
+        b.setAttribute("aria-selected", sel ? "true" : "false");
+      });
+      setOpen(false);
+      trigger.focus();
+      if (cfg.onChange) cfg.onChange(o);
+    }
+    // 열려 있을 때의 키보드 조작 — Escape 가 시트까지 닫지 않도록 여기서 소비한다.
+    root.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && open) { e.stopPropagation(); setOpen(false); trigger.focus(); return; }
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      e.preventDefault();
+      if (!open) { setOpen(true); (optEls[Math.max(0, options.indexOf(value))] || optEls[0]).focus(); return; }
+      const cur = optEls.indexOf(document.activeElement);
+      const next = e.key === "ArrowDown" ? cur + 1 : cur - 1;
+      if (optEls[next]) optEls[next].focus();
+    });
+    return root;
+  }
+
   // ---------- 모달: 신청인 정보 ----------
   function openApplicantModal(initial, onSave, onClose) {
     let closedVia = false;
@@ -719,14 +793,8 @@
       let dept = (initial && DEPTS.indexOf(initial.dept) >= 0 && initial.dept) || "";
       const saveBtn = el("button", { class: "btn", onClick: () => { if (!(company && dept && name.trim() && contact.trim())) return; closedVia = true; close(); onSave({ company: company, dept: dept, name: name.trim(), contact: contact.trim() }); } }, "저장");
       function sync() { saveBtn.disabled = !(company && dept && name.trim() && contact.trim()); }
-      function buildSelect(placeholder, options, value, onChange) {
-        const sel = el("select", { required: true, onChange: (e) => { onChange(e.target.value); sync(); } },
-          el("option", { value: "", disabled: true, selected: !value }, placeholder));
-        options.forEach((o) => sel.appendChild(el("option", { value: o, selected: o === value }, o)));
-        return sel;
-      }
-      const fldCompany = buildSelect("회사를 선택하세요", COMPANIES, company, (v) => { company = v; });
-      const fldDept = buildSelect("부서를 선택하세요", DEPTS, dept, (v) => { dept = v; });
+      const fldCompany = buildDropdown({ label: "회사", placeholder: "회사를 선택하세요", options: COMPANIES, value: company, onChange: (v) => { company = v; sync(); } });
+      const fldDept = buildDropdown({ label: "부서", placeholder: "부서를 선택하세요", options: DEPTS, value: dept, onChange: (v) => { dept = v; sync(); } });
       const fldName = el("input", { type: "text", value: name, placeholder: "홍길동", onInput: (e) => { name = e.target.value; sync(); } });
       const fldContact = el("input", { type: "tel", inputmode: "tel", value: contact, placeholder: "010-0000-0000", onInput: (e) => { contact = e.target.value; sync(); } });
       sync();
@@ -737,8 +805,8 @@
         el("div", { class: "sheet-head" }, el("h4", null, "신청인 정보"), closeBtn),
         el("div", { class: "sheet-body" },
           el("p", { class: "qi-desc" }, "신청인 정보확인 및 배송사진 전송을 위해 신청인 정보를 수집합니다."),
-          el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "회사"), fldCompany),
-          el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "부서"), fldDept),
+          el("div", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "회사"), fldCompany),
+          el("div", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "부서"), fldDept),
           el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "성함"), fldName),
           el("label", { class: "qi-field" }, el("span", { class: "qi-field-lbl" }, "연락처"), fldContact)),
         el("div", { class: "sheet-foot" }, saveBtn)));
