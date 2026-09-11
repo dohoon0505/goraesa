@@ -305,7 +305,7 @@
     // categories
     const catlist = el("div", { class: "catlist" });
     window.CATEGORIES.forEach((c) => {
-      const count = window.SECTIONS[c.id].reduce((a, s) => a + s.items.length, 0);
+      const count = window.SECTIONS[c.id].reduce((ids, s) => { s.items.forEach((it) => { const pid = it.productId || it.id; if (ids.indexOf(pid) < 0) ids.push(pid); }); return ids; }, []).length; // 여러 섹션에 실린 같은 상품은 한 번만 센다
       catlist.appendChild(el("button", { class: "cat", onClick: () => openCat(c.id) },
         el("span", { class: "thumb" }, el("img", { src: c.photo, alt: c.name })),
         el("span", { class: "cat-text" },
@@ -411,7 +411,7 @@
       });
       root.appendChild(el("section", { class: "group" },
         el("span", { class: "group-kicker" }, CatIc({ size: 12, strokeWidth: 2 }), " ", g.tag),
-        el("h3", null, el("span", { class: "light" }, g.kicker), g.title),
+        el("h3", null, g.kicker ? el("span", { class: "light" }, g.kicker) : null, g.title),
         products));
     });
 
